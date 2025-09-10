@@ -1,0 +1,18 @@
+import { Schema, model, Document } from "mongoose";
+
+export interface ICredential extends Document {
+  title: string;
+  platform: string;
+  data: Record<string, any>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const CredentialSchema = new Schema<ICredential>({
+  title: { type: String, required: true },
+  platform: { type: String, required: true },
+  data: { type: Object, required: true },
+}, { timestamps: true });
+
+const CredentialModel = model<ICredential>('Credential', CredentialSchema);
+export default CredentialModel;
