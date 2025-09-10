@@ -1,19 +1,19 @@
-import express, {Request, Response} from "express";
+import dotenv from "dotenv";
+dotenv.config();
+
+import express from "express";
 import cors from "cors";
+import connectDB from "./utils/connectDB";
+import authRoutes from "./routes/authRoutes";
 
-const app = express()
-const PORT = 3000;
+const app = express();
+const PORT = process.env.PORT!;
 
-app.use(express.json());
 app.use(cors());
+app.use(express.json());
 
-app.post("/user/signup", (req : Request, res : Response) => {
-    const {email, password} = req.body;
+connectDB();
 
-    
-});
+app.use("/auth", authRoutes);
 
-
-app.listen(PORT, ()=>{
-    console.log("application is running");
-});
+app.listen(PORT);
