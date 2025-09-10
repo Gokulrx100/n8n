@@ -17,8 +17,10 @@ export const signup = async (req: Request, res: Response) => {
     }
 
     const hashed = await hashPassword(password);
-    const newUser = new UserModel({ email: email, password: hashed });
-    await newUser.save();
+    const newUser = await UserModel.create({
+      email,
+      password : hashed
+    });
 
     res.status(200).json({ message: "User Created" });
   } catch (err) {
