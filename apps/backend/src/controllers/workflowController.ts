@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import workFlowModel from "../models/WorkFlow";
 import { authRequest } from "../utils/authMiddleware";
 
@@ -6,15 +6,13 @@ export const createWorkflow = async (req: authRequest, res: Response) => {
     try {
         const { title, nodes, connections, enabled } = req.body;
 
-        const workflow = new workFlowModel({
+        const workflow = await workFlowModel.create({
             title,
             nodes,
             connections,
             enabled: enabled ?? true,
             userId: req.user?.userId
         });
-
-        await workflow.save();
 
         res.status(201).json({ workflow, message: "workflow created" });
     } catch (err) {
