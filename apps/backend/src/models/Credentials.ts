@@ -8,11 +8,14 @@ export interface ICredential extends Document {
   updatedAt: Date;
 }
 
-const CredentialSchema = new Schema<ICredential>({
-  title: { type: String, required: true },
-  platform: { type: String, required: true },
-  data: { type: Object, required: true },
-}, { timestamps: true });
+const CredentialSchema = new Schema<ICredential>(
+  {
+    title: { type: String, required: true },
+    platform: { type: String, required: true },
+    data: { type: Object, required: true },
+  },
+  { timestamps: true }
+);
 
-const CredentialModel = model<ICredential>('Credential', CredentialSchema);
+const CredentialModel = model<ICredential>("Credential", CredentialSchema);
 export default CredentialModel;
