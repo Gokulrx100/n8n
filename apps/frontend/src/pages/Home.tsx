@@ -28,7 +28,7 @@ export default function Home() {
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showCredentialModal, setShowCredentialModal] = useState(false); // NEW
+  const [showCredentialModal, setShowCredentialModal] = useState(false); 
   const navigate = useNavigate();
   const [credentialPlatform, setCredentialPlatform] = useState<
     "email" | "telegram"
@@ -122,7 +122,7 @@ export default function Home() {
     activeTab === "workflows" ? workflows.length > 0 : credentials.length > 0;
 
   return (
-    <>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-indigo-900">
       <TopNav activeTab={activeTab} setActiveTab={setActiveTab} />
       <main className="max-w-6xl mx-auto p-6">
         <div className="flex items-center justify-between mb-6">
@@ -451,6 +451,6 @@ export default function Home() {
           </div>
         )}
       </main>
-    </>
+    </div>
   );
 }
