@@ -379,7 +379,6 @@ export default function Home() {
                   </select>
                 </div>
 
-                {/* Conditionally render email fields */}
                 {credentialPlatform === "email" && (
                   <>
                     <div>
