@@ -23,3 +23,4 @@ const WebhookSchema = new Schema<Iwebhook>(
 
 const WebhookModel = model<Iwebhook>("Webhook", WebhookSchema);
 export default WebhookModel;
+

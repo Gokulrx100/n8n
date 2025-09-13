@@ -1,13 +1,15 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
+import Home from "./pages/Home";
+import Workflow from "./pages/Workflow";
 
 function isAuthenticated() {
-  return !!localStorage.getItem("jwt");
+  return !!localStorage.getItem("token");
 }
 
 function RootRedirect() {
-  return <Navigate to={isAuthenticated() ? "/workflows" : "/signin"} replace />;
+  return <Navigate to={isAuthenticated() ? "/Home" : "/signin"} replace />;
 }
 
 export default function App() {
@@ -15,16 +17,11 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<RootRedirect />} />
+        <Route path="/Home" element={<Home />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
-
-        {/* Placeholder route for when you add workflows page */}
-        <Route path="/workflows" element={
-          isAuthenticated() ? <div className="p-6">Workflows placeholder (add page later)</div> : <Navigate to="/signin" replace />
-        } />
-
-        {/* fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/create/workflow" element={<Workflow />} />
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
   );

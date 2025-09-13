@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate, Link } from "react-router";
+import { useNavigate, Link } from "react-router-dom";
 
 const BASE = import.meta.env.VITE_BASE_API!;
 
@@ -21,8 +21,8 @@ export default function SignIn() {
       const res = await axios.post(`${BASE}/auth/signin`, { email, password });
       const token = res.data?.token;
       if (!token) throw new Error(res.data?.message || "No token returned from server");
-      localStorage.setItem("jwt", token);
-      navigate("/workflows", { replace: true });
+      localStorage.setItem("token", token);
+      navigate("/Home", { replace: true });
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || "Sign in failed";
       setError(msg);
