@@ -1,6 +1,7 @@
 import { Schema, model, Document, Types } from "mongoose";
 
 export interface IWebhook extends Document {
+  _id : Types.ObjectId
   title: string;
   workflowId: Types.ObjectId;    
   nodeId: string;                
