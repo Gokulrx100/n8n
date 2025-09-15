@@ -21,6 +21,7 @@ export default function App() {
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/create/workflow" element={<Workflow />} />
+        <Route path="/create/workflow/:id" element={<Workflow />}/>
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
