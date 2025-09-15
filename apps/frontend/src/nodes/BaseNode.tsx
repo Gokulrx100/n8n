@@ -18,7 +18,7 @@ export default function BaseNode({
   return (
     <div
       className={`flex flex-col items-center justify-center
-                  w-28 h-28 rounded-xl shadow-lg text-white ${bg} relative`}
+                  w-16 h-16 rounded-lg shadow-lg text-white ${bg} relative`}
     >
       {type !== "trigger" && (
         <Handle
@@ -27,14 +27,14 @@ export default function BaseNode({
           style={{
             width: 10, 
             height: 10,
-            background: "#d1d5db",
+            background: "#3b82f6",
             border: "2px solid white",
           }}
         />
       )}
 
-      <div className="mb-2">{icon}</div>
-      <div className="text-sm font-medium text-center">{title}</div>
+      <div className="mb-0.5">{React.cloneElement(icon as React.ReactElement, { size: 16 } as any)}</div>
+      <div className="text-[10px] font-medium text-center px-0.5 leading-tight">{title}</div>
 
       <Handle
         type="source"
@@ -42,7 +42,7 @@ export default function BaseNode({
         style={{
           width: 10,
           height: 10,
-          background: "#d1d5db",
+          background: "#10b981",
           border: "2px solid white",
         }}
       />
