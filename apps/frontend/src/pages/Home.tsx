@@ -28,7 +28,7 @@ export default function Home() {
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showCredentialModal, setShowCredentialModal] = useState(false); 
+  const [showCredentialModal, setShowCredentialModal] = useState(false);
   const navigate = useNavigate();
   const [credentialPlatform, setCredentialPlatform] = useState<
     "email" | "telegram"
@@ -203,8 +203,8 @@ export default function Home() {
 
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() =>
-                            navigate(`/create/workflow?id=${workflow._id}`)
+                          onClick={
+                            () => navigate(`/create/workflow/${workflow._id}`) 
                           }
                           className="px-3 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-md"
                         >
