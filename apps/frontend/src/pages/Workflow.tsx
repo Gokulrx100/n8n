@@ -18,10 +18,10 @@ import "@xyflow/react/dist/style.css";
 import { ArrowLeft, X } from "lucide-react";
 
 import TopNav from "../components/TopNav";
-import ManualTriggerNode from "../nodes/ManualTriggerNode";
-import WebhookTriggerNode from "../nodes/WebhookTriggerNode";
-import TelegramActionNode from "../nodes/TelegramActionNode";
-import EmailActionNode from "../nodes/EmailActionNode";
+import ManualTriggerNode from "../nodes/Triggers/ManualTriggerNode";
+import WebhookTriggerNode from "../nodes/Triggers/WebhookTriggerNode";
+import TelegramActionNode from "../nodes/Actions/TelegramActionNode";
+import EmailActionNode from "../nodes/Actions/EmailActionNode";
 
 const BASE = import.meta.env.VITE_BASE_API!;
 const nodeTypes = {
@@ -31,7 +31,6 @@ const nodeTypes = {
   emailAction: EmailActionNode,
 };
 
-// Node configurations to reduce repetition
 const NODE_CONFIGS = {
   manualTrigger: { label: "Manual", payload: "" },
   webhookTrigger: {
@@ -56,7 +55,6 @@ const NODE_CONFIGS = {
   },
 };
 
-// Common input styles
 const INPUT_CLASS =
   "w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent";
 const BUTTON_CLASS =
@@ -79,14 +77,12 @@ function WorkflowEditor() {
   const [credentials, setCredentials] = useState<any[]>([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
 
-  // Modal states
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<string | null>(null);
   const [modalData, setModalData] = useState<Record<string, any>>({});
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [saveModalTitle, setSaveModalTitle] = useState("");
 
-  // Fetch credentials on mount
   useEffect(() => {
     const fetchCredentials = async () => {
       try {
@@ -101,7 +97,6 @@ function WorkflowEditor() {
     fetchCredentials();
   }, []);
 
-  // Load workflow if editing
   useEffect(() => {
     if (!id) return;
     const loadWorkflow = async () => {
@@ -235,7 +230,6 @@ function WorkflowEditor() {
     if (!modalType) return;
     const data = { ...modalData };
 
-    // Add credential title if credential is selected
     if (data.credentialId) {
       const cred = credentials.find(
         (c) => String(c._id ?? c.id) === String(data.credentialId)
@@ -243,7 +237,6 @@ function WorkflowEditor() {
       if (cred) data.credentialTitle = cred.title ?? cred.name;
     }
 
-    // Generate path for webhook if empty
     if (modalType === "webhookTrigger" && !data.path) {
       data.path = `wh_${Date.now().toString(36)}`;
     }
@@ -270,7 +263,6 @@ function WorkflowEditor() {
     [setNodes, selectedNode]
   );
 
-  // Filtered credentials
   const telegramCreds = useMemo(
     () =>
       credentials.filter((c) =>
@@ -291,7 +283,6 @@ function WorkflowEditor() {
     [credentials]
   );
 
-  // Render modal content based on type
   const renderModalContent = () => {
     if (!modalType) return null;
 

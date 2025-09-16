@@ -1,4 +1,4 @@
-import BaseNode from "./BaseNode";
+import BaseNode from "../BaseNode";
 import { Send } from "lucide-react";
 
 export default function TelegramActionNode() {

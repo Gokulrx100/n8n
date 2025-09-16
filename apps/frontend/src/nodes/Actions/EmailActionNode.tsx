@@ -1,4 +1,4 @@
-import BaseNode from "./BaseNode";
+import BaseNode from "../BaseNode";
 import { Mail } from "lucide-react";
 
 export default function EmailActionNode() {

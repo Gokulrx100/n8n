@@ -136,7 +136,7 @@ export default function Home() {
                 if (activeTab === "workflows") {
                   navigate("/create/workflow");
                 } else {
-                  setShowCredentialModal(true); // OPEN MODAL
+                  setShowCredentialModal(true); 
                 }
               }}
               className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-sm font-medium"
