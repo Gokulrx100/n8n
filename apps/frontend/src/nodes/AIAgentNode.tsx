@@ -1,5 +1,3 @@
-import React from 'react'
-
 const AIAgentNode = () => {
   return (
     <div>AIAgentNode</div>
