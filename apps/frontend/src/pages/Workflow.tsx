@@ -13,8 +13,8 @@ import TopNav from "../components/TopNav";
 import WorkflowHeader from "../components/workflow/WorkflowHeader";
 import ToolBoxSidebar from "../components/workflow/ToolBoxSidebar";
 import NodeSettingsPanel from "../components/workflow/NodeSettingsPanel";
-import SaveWorkflowModal from "../components/SaveWorkflowModel";
-import AddNodeModal from "../components/AddNodeModel";
+import SaveWorkflowModel from "../components/SaveWorkflowModel";
+import AddNodeModel from "../components/AddNodeModel";
 import { useWorkflowEditor } from "../hooks/useWorkflowEditor";
 
 import ManualTriggerNode from "../nodes/Triggers/ManualTriggerNode";
@@ -42,9 +42,9 @@ function WorkflowEditor() {
     saving,
     credentials,
     selectedNode,
-    modalOpen,
-    modalType,
-    modalData,
+    modelOpen,
+    modelType,
+    modelData,
     onNodesChange,
     onEdgesChange,
     onConnect,
@@ -53,27 +53,26 @@ function WorkflowEditor() {
     updateNodeData,
     deleteSelectedNode,
     saveWorkflow,
-    openNodeModal,
-    closeModal,
-    handleModalSubmit,
-    updateModalData,
+    openNodeModel,
+    closeModel,
+    handleModelSubmit,
+    updateModelData,
   } = useWorkflowEditor(id);
 
-  const [saveModalOpen, setSaveModalOpen] = useState(false);
-  const [saveModalTitle, setSaveModalTitle] = useState("");
+  const [saveModelOpen, setSaveModelOpen] = useState(false);
+  const [saveModelTitle, setSaveModelTitle] = useState("");
 
   const handleSave = useCallback(() => {
     if (nodes.length === 0) {
       alert("Cannot save an empty workflow. Please add at least one node.");
       return;
     }
-    setSaveModalTitle(title || "");
-    setSaveModalOpen(true);
+    setSaveModelTitle(title || "");
+    setSaveModelOpen(true);
   }, [title, nodes.length]);
 
   const onInit = useCallback((instance: any) => (flowInstance.current = instance), []);
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Delete" && selectedNode) deleteSelectedNode();
@@ -96,7 +95,7 @@ function WorkflowEditor() {
       />
 
       <div className="flex-1 relative bg-gray-900">
-        <ToolBoxSidebar onAddNode={openNodeModal} />
+        <ToolBoxSidebar onAddNode={openNodeModel} />
 
         <div ref={wrapperRef} className="w-full h-full">
           <ReactFlow
@@ -140,26 +139,26 @@ function WorkflowEditor() {
         />
       </div>
 
-      <SaveWorkflowModal
-        isOpen={saveModalOpen}
-        title={saveModalTitle}
+      <SaveWorkflowModel
+        isOpen={saveModelOpen}
+        title={saveModelTitle}
         saving={saving}
-        onClose={() => setSaveModalOpen(false)}
+        onClose={() => setSaveModelOpen(false)}
         onSave={(title) => {
           saveWorkflow(title);
-          setSaveModalOpen(false);
+          setSaveModelOpen(false);
         }}
-        onTitleChange={setSaveModalTitle}
+        onTitleChange={setSaveModelTitle}
       />
 
-      <AddNodeModal
-        isOpen={modalOpen}
-        modalType={modalType}
-        modalData={modalData}
+      <AddNodeModel
+        isOpen={modelOpen}
+        modelType={modelType}
+        modelData={modelData}
         credentials={credentials}
-        onClose={closeModal}
-        onSubmit={handleModalSubmit}
-        onDataChange={updateModalData}
+        onClose={closeModel}
+        onSubmit={handleModelSubmit}
+        onDataChange={updateModelData}
       />
     </div>
   );

@@ -44,3 +44,34 @@ export const deleteCredential = async (req : authRequest, res : Response) => {
         res.status(500).json({ message : "Error deleting the credential", error : err});
     }
 };
+
+export const editCredential = async (req : authRequest, res : Response) => {
+    try{
+        const { id } = req.params;
+    const { title, platform, data } = req.body;
+    
+    const existingCredential = await CredentialModel.findById(id);
+    if (!existingCredential) {
+      return res.status(404).json({ message: 'Credential not found' });
+    }
+
+    const updatedData = { ...existingCredential.data };
+    
+    if (platform === 'telegram' && data.botToken) {
+      updatedData.botToken = data.botToken;
+    } else if (platform === 'email') {
+      if (data.email) updatedData.email = data.email;
+      if (data.appPassword) updatedData.appPassword = data.appPassword;
+    }
+
+    const updatedCredential = await CredentialModel.findByIdAndUpdate(
+      id,
+      { title, platform, data: updatedData },
+      { new: true }
+    );
+
+    res.json({ credential: updatedCredential });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update credential' });
+  }
+}

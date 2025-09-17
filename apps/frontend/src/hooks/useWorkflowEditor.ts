@@ -29,10 +29,10 @@ export function useWorkflowEditor(id?: string) {
   const [credentials, setCredentials] = useState<any[]>([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
 
-  // Modal states
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalType, setModalType] = useState<string | null>(null);
-  const [modalData, setModalData] = useState<Record<string, any>>({});
+  // Model states
+  const [modelOpen, setModelOpen] = useState(false);
+  const [modelType, setModelType] = useState<string | null>(null);
+  const [modelData, setModelData] = useState<Record<string, any>>({});
 
   // Fetch credentials on mount
   useEffect(() => {
@@ -160,22 +160,21 @@ export function useWorkflowEditor(id?: string) {
     [setNodes, selectedNode]
   );
 
-  // Modal handlers
-  const openNodeModal = useCallback((type: string) => {
-    setModalType(type);
-    setModalData(NODE_CONFIGS[type as keyof typeof NODE_CONFIGS] || {});
-    setModalOpen(true);
+  const openNodeModel = useCallback((type: string) => {
+    setModelType(type);
+    setModelData(NODE_CONFIGS[type as keyof typeof NODE_CONFIGS] || {});
+    setModelOpen(true);
   }, []);
 
-  const closeModal = useCallback(() => {
-    setModalOpen(false);
-    setModalType(null);
-    setModalData({});
+  const closeModel = useCallback(() => {
+    setModelOpen(false);
+    setModelType(null);
+    setModelData({});
   }, []);
 
-  const handleModalSubmit = useCallback(() => {
-    if (!modalType) return;
-    const data = { ...modalData };
+  const handleModelSubmit = useCallback(() => {
+    if (!modelType) return;
+    const data = { ...modelData };
 
     if (data.credentialId) {
       const cred = credentials.find(
@@ -184,16 +183,16 @@ export function useWorkflowEditor(id?: string) {
       if (cred) data.credentialTitle = cred.title ?? cred.name;
     }
 
-    if (modalType === "webhookTrigger" && !data.path) {
+    if (modelType === "webhookTrigger" && !data.path) {
       data.path = `wh_${Date.now().toString(36)}`;
     }
 
-    createNodeWithData(modalType, data);
-    closeModal();
-  }, [modalType, modalData, credentials, createNodeWithData, closeModal]);
+    createNodeWithData(modelType, data);
+    closeModel();
+  }, [modelType, modelData, credentials, createNodeWithData, closeModel]);
 
-  const updateModalData = useCallback((updates: Record<string, any>) => {
-    setModalData((prev) => ({ ...prev, ...updates }));
+  const updateModelData = useCallback((updates: Record<string, any>) => {
+    setModelData((prev) => ({ ...prev, ...updates }));
   }, []);
 
   return {
@@ -204,9 +203,9 @@ export function useWorkflowEditor(id?: string) {
     saving,
     credentials,
     selectedNode,
-    modalOpen,
-    modalType,
-    modalData,
+    modelOpen,
+    modelType,
+    modelData,
     // Handlers
     onNodesChange,
     onEdgesChange,
@@ -216,9 +215,9 @@ export function useWorkflowEditor(id?: string) {
     updateNodeData,
     deleteSelectedNode,
     saveWorkflow,
-    openNodeModal,
-    closeModal,
-    handleModalSubmit,
-    updateModalData,
+    openNodeModel,
+    closeModel,
+    handleModelSubmit,
+    updateModelData,
   };
 }
