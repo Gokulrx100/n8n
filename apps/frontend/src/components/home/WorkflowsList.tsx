@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { memo } from "react";
 
 interface Workflow {
   _id: string;
@@ -14,7 +15,7 @@ interface WorkflowsListProps {
   onDelete: (workflowId: string) => void;
 }
 
-export default function WorkflowsList({ workflows, loading, onDelete }: WorkflowsListProps) {
+const WorkflowsList = memo(({ workflows, loading, onDelete }: WorkflowsListProps) => {
   const navigate = useNavigate();
 
   const formatDate = (dateString: string) =>
@@ -95,4 +96,6 @@ export default function WorkflowsList({ workflows, loading, onDelete }: Workflow
       ))}
     </div>
   );
-}
+});
+
+export default WorkflowsList;

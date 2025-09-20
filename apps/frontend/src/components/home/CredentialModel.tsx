@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 
 interface Credential {
   _id: string;
@@ -25,14 +25,14 @@ interface CredentialModelProps {
   }) => void;
 }
 
-export default function CredentialModel({ 
+const CredentialModel = memo(({ 
   isOpen, 
   creating, 
   editingCredential,
   onClose, 
   onSubmit,
   onUpdate
-}: CredentialModelProps) {
+}: CredentialModelProps) => {
   const [credentialPlatform, setCredentialPlatform] = useState<"email" | "telegram">("email");
   const [credTitle, setCredTitle] = useState("");
   const [botToken, setBotToken] = useState("");
@@ -231,4 +231,6 @@ export default function CredentialModel({
       </div>
     </div>
   );
-}
+});
+
+export default CredentialModel;

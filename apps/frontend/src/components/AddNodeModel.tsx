@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { memo } from "react";
 
 interface AddNodeModelProps {
   isOpen: boolean;
@@ -14,7 +15,7 @@ const INPUT_CLASS = "w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded
 const BUTTON_CLASS = "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors";
 const CANCEL_BUTTON_CLASS = "px-4 py-2 text-gray-300 hover:text-white border border-gray-600 rounded-lg transition-colors";
 
-export default function AddNodeModel({
+const AddNodeModel = memo(({
   isOpen,
   modelType,
   modelData,
@@ -22,7 +23,7 @@ export default function AddNodeModel({
   onClose,
   onSubmit,
   onDataChange
-}: AddNodeModelProps) {
+}: AddNodeModelProps) => {
   if (!isOpen || !modelType) return null;
 
   const telegramCreds = credentials.filter((c) =>
@@ -231,4 +232,6 @@ export default function AddNodeModel({
       </div>
     </div>
   );
-}
+});
+
+export default AddNodeModel;

@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 interface Credential {
   _id: string;
   title: string;
@@ -13,13 +15,13 @@ interface CredentialsListProps {
   onCreateNew: () => void;
 }
 
-export default function CredentialsList({ 
+const CredentialsList = memo(({ 
   credentials, 
   loading, 
   onDelete, 
   onEdit, 
   onCreateNew 
-}: CredentialsListProps) {
+}: CredentialsListProps) => {
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -90,4 +92,6 @@ export default function CredentialsList({
       ))}
     </div>
   );
-}
+});
+
+export default CredentialsList;

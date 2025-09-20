@@ -15,6 +15,7 @@ export default function Home() {
     showCredentialModel,
     creating,
     editingCredential,
+    itemsCount,
     setActiveTab,
     deleteWorkflow,
     deleteCredential,
@@ -24,8 +25,6 @@ export default function Home() {
     handleCreateNew,
     closeCredentialModel,
   } = useHomeData();
-
-  const itemsCount = activeTab === "workflows" ? workflows.length : credentials.length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-indigo-900">

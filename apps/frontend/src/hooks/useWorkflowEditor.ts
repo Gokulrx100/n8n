@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useNodesState, useEdgesState, useReactFlow, addEdge, type Node, type Edge } from "@xyflow/react";
 import axios from "axios";
@@ -34,28 +34,31 @@ export function useWorkflowEditor(id?: string) {
   const [modelType, setModelType] = useState<string | null>(null);
   const [modelData, setModelData] = useState<Record<string, any>>({});
 
-  // Fetch credentials on mount
-  useEffect(() => {
-    const fetchCredentials = async () => {
-      try {
-        const res = await axios.get(`${BASE}/credentials`, {
-          headers: { token: localStorage.getItem("token") ?? "" },
-        });
-        setCredentials(res.data?.credentials ?? res.data ?? []);
-      } catch {
-        setCredentials([]);
-      }
-    };
-    fetchCredentials();
-  }, []);
+  const authHeaders = useCallback(() => ({
+    token: localStorage.getItem("token") ?? "",
+  }), []);
 
-  // Load workflow if editing
+  const fetchCredentials = useCallback(async () => {
+    try {
+      const res = await axios.get(`${BASE}/credentials`, {
+        headers: authHeaders(),
+      });
+      setCredentials(res.data?.credentials ?? res.data ?? []);
+    } catch {
+      setCredentials([]);
+    }
+  }, [authHeaders]);
+
+  useEffect(() => {
+    fetchCredentials();
+  }, [fetchCredentials]);
+
   useEffect(() => {
     if (!id) return;
     const loadWorkflow = async () => {
       try {
         const res = await axios.get(`${BASE}/workflow/${id}`, {
-          headers: { token: localStorage.getItem("token") ?? "" },
+          headers: authHeaders(),
         });
         const wf = res.data.workflow;
         setTitle(wf.title ?? "");
@@ -66,7 +69,7 @@ export function useWorkflowEditor(id?: string) {
       }
     };
     loadWorkflow();
-  }, [id, setNodes, setEdges]);
+  }, [id, authHeaders]); 
 
   const getNextNodePosition = useCallback(() => {
     if (nodes.length === 0) return { x: 200, y: 250 };
@@ -102,11 +105,11 @@ export function useWorkflowEditor(id?: string) {
       try {
         if (id) {
           await axios.put(`${BASE}/workflow/${id}`, payload, {
-            headers: { token: localStorage.getItem("token") ?? "" },
+            headers: authHeaders(),
           });
         } else {
           const res = await axios.post(`${BASE}/workflow`, payload, {
-            headers: { token: localStorage.getItem("token") ?? "" },
+            headers: authHeaders(),
           });
           const newId = res.data.workflow?._id;
           if (newId) navigate(`/create/workflow/${newId}`, { replace: true });
@@ -119,7 +122,7 @@ export function useWorkflowEditor(id?: string) {
         setSaving(false);
       }
     },
-    [id, nodes, edges, navigate]
+    [id, nodes, edges, navigate, authHeaders]
   );
 
   const onConnect = useCallback(
@@ -195,7 +198,8 @@ export function useWorkflowEditor(id?: string) {
     setModelData((prev) => ({ ...prev, ...updates }));
   }, []);
 
-  return {
+  // Memoize the return object to prevent unnecessary re-renders
+  return useMemo(() => ({
     // State
     nodes,
     edges,
@@ -219,5 +223,27 @@ export function useWorkflowEditor(id?: string) {
     closeModel,
     handleModelSubmit,
     updateModelData,
-  };
+  }), [
+    nodes,
+    edges,
+    title,
+    saving,
+    credentials,
+    selectedNode,
+    modelOpen,
+    modelType,
+    modelData,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    onNodeClick,
+    setSelectedNode,
+    updateNodeData,
+    deleteSelectedNode,
+    saveWorkflow,
+    openNodeModel,
+    closeModel,
+    handleModelSubmit,
+    updateModelData,
+  ]);
 }

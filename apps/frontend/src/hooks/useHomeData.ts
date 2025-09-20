@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -31,11 +31,11 @@ export function useHomeData() {
   const [editingCredential, setEditingCredential] = useState<Credential | null>(null);
   const navigate = useNavigate();
 
-  const authHeaders = () => ({
+  const authHeaders = useCallback(() => ({
     token: localStorage.getItem("token"),
-  });
+  }), []);
 
-  const fetchWorkflows = async () => {
+  const fetchWorkflows = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -49,9 +49,9 @@ export function useHomeData() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [authHeaders]);
 
-  const fetchCredentials = async () => {
+  const fetchCredentials = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -65,33 +65,33 @@ export function useHomeData() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [authHeaders]);
 
-  const deleteWorkflow = async (workflowId: string) => {
+  const deleteWorkflow = useCallback(async (workflowId: string) => {
     if (!confirm("Are you sure you want to delete this workflow?")) return;
     try {
       await axios.delete(`${BASE}/workflow/${workflowId}`, {
         headers: authHeaders(),
       });
-      setWorkflows(workflows.filter((wf) => wf._id !== workflowId));
+      setWorkflows(prev => prev.filter((wf) => wf._id !== workflowId));
     } catch {
       alert("Failed to delete workflow");
     }
-  };
+  }, [authHeaders]);
 
-  const deleteCredential = async (credentialId: string) => {
+  const deleteCredential = useCallback(async (credentialId: string) => {
     if (!confirm("Are you sure you want to delete this credential?")) return;
     try {
       await axios.delete(`${BASE}/credentials/${credentialId}`, {
         headers: authHeaders(),
       });
-      setCredentials(credentials.filter((cred) => cred._id !== credentialId));
+      setCredentials(prev => prev.filter((cred) => cred._id !== credentialId));
     } catch {
       alert("Failed to delete credential");
     }
-  };
+  }, [authHeaders]);
 
-  const createCredential = async (credentialData: {
+  const createCredential = useCallback(async (credentialData: {
     title: string;
     platform: string;
     data: Record<string, any>;
@@ -109,17 +109,17 @@ export function useHomeData() {
     } finally {
       setCreating(false);
     }
-  };
+  }, [authHeaders, fetchCredentials]);
 
-  const editCredential = (credentialId: string) => {
+  const editCredential = useCallback((credentialId: string) => {
     const credential = credentials.find((cred) => cred._id === credentialId);
     if (credential) {
       setEditingCredential(credential);
       setShowCredentialModel(true);
     }
-  };
+  }, [credentials]);
 
-  const updateCredential = async (credentialId: string, credentialData: {
+  const updateCredential = useCallback(async (credentialId: string, credentialData: {
     title: string;
     platform: string;
     data: Record<string, any>;
@@ -138,20 +138,20 @@ export function useHomeData() {
     } finally {
       setCreating(false);
     }
-  };
+  }, [authHeaders, fetchCredentials]);
 
-  const closeCredentialModel = () => {
+  const closeCredentialModel = useCallback(() => {
     setShowCredentialModel(false);
     setEditingCredential(null);
-  };
+  }, []);
 
-  const handleCreateNew = () => {
+  const handleCreateNew = useCallback(() => {
     if (activeTab === "workflows") {
       navigate("/create/workflow");
     } else {
       setShowCredentialModel(true);
     }
-  };
+  }, [activeTab, navigate]);
 
   useEffect(() => {
     if (activeTab === "workflows") {
@@ -163,9 +163,16 @@ export function useHomeData() {
 
   useEffect(() => {
     fetchWorkflows();
-  }, []);
+  }, [fetchWorkflows]);
 
-  return {
+  // Memoize expensive calculations
+  const itemsCount = useMemo(() => 
+    activeTab === "workflows" ? workflows.length : credentials.length,
+    [activeTab, workflows.length, credentials.length]
+  );
+
+  // Memoize the return object to prevent unnecessary re-renders
+  return useMemo(() => ({
     // State
     activeTab,
     workflows,
@@ -175,6 +182,7 @@ export function useHomeData() {
     showCredentialModel,
     creating,
     editingCredential,
+    itemsCount,
     // Actions
     setActiveTab,
     setShowCredentialModel,
@@ -187,5 +195,15 @@ export function useHomeData() {
     fetchWorkflows,
     fetchCredentials,
     closeCredentialModel,
-  };
+  }), [
+    activeTab,
+    workflows,
+    credentials,
+    loading,
+    error,
+    showCredentialModel,
+    creating,
+    editingCredential,
+    itemsCount,
+  ]);
 }
