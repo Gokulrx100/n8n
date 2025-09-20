@@ -18,7 +18,7 @@ import AddNodeModel from "../components/AddNodeModel";
 import { useWorkflowEditor } from "../hooks/useWorkflowEditor";
 
 import ManualTriggerNode from "../nodes/Triggers/ManualTriggerNode";
-import AIAgentNode from "../nodes/AIAgentNode";
+import AIAgentNode from "../nodes/Actions/AIAgentNode";
 import WebhookTriggerNode from "../nodes/Triggers/WebhookTriggerNode";
 import TelegramActionNode from "../nodes/Actions/TelegramActionNode";
 import EmailActionNode from "../nodes/Actions/EmailActionNode";

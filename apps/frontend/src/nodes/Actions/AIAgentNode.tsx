@@ -4,7 +4,7 @@ import { Bot } from "lucide-react";
 export default function AIAgentNode() {
   return (
     <div className="relative">
-      <div className="flex items-center justify-center w-48 h-24 rounded-lg shadow-lg text-white bg-gray-700 border border-gray-500 relative">
+      <div className="flex items-center justify-center w-46 h-22 rounded-lg shadow-lg text-white bg-gray-700 border border-gray-500 relative">
         <Handle
           type="target"
           position={Position.Left}
