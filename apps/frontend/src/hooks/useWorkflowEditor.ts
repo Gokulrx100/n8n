@@ -16,6 +16,45 @@ const NODE_CONFIGS = {
   },
   telegramAction: { label: "Telegram", credentialId: "", chatId: "", message: "" },
   emailAction: { label: "Email", credentialId: "", to: "", subject: "", body: "" },
+  aiAgent: { 
+    label: "AI Agent", 
+    systemPrompt: "You are a helpful assistant",
+    temperature: 0.7,
+    maxTokens: 1000,
+    tools: [],
+    model: "gemini-pro",
+    memory: "default"
+  },
+  geminiModel: { 
+    label: "Gemini Model", 
+    model: "gemini-pro",
+    apiKey: "",
+    temperature: 0.7,
+    maxTokens: 1000
+  },
+  redisMemory: { 
+    label: "Redis Memory", 
+    sessionId: `session_${Date.now()}`,
+    maxHistory: 10,
+    ttl: 3600
+  },
+  httpTool: { 
+    label: "HTTP Tool", 
+    method: "GET",
+    url: "",
+    headers: {},
+    body: ""
+  },
+  codeTool: { 
+    label: "Code Tool", 
+    language: "javascript",
+    code: ""
+  },
+  workflowTool: { 
+    label: "Workflow Tool", 
+    workflowId: "",
+    inputData: {}
+  }
 };
 
 export function useWorkflowEditor(id?: string) {

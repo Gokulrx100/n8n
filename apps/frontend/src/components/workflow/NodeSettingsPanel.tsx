@@ -9,12 +9,12 @@ interface NodeSettingsPanelProps {
   onDeleteNode: () => void;
 }
 
-export default function NodeSettingsPanel({ 
-  selectedNode, 
-  credentials, 
-  onClose, 
-  onUpdateNode, 
-  onDeleteNode 
+export default function NodeSettingsPanel({
+  selectedNode,
+  credentials,
+  onClose,
+  onUpdateNode,
+  onDeleteNode,
 }: NodeSettingsPanelProps) {
   if (!selectedNode) return null;
 
@@ -23,7 +23,9 @@ export default function NodeSettingsPanel({
   );
   const emailCreds = credentials.filter((c) =>
     ["resend", "email", "smtp"].some((p) =>
-      String(c.platform ?? "").toLowerCase().includes(p)
+      String(c.platform ?? "")
+        .toLowerCase()
+        .includes(p)
     )
   );
 
@@ -46,37 +48,50 @@ export default function NodeSettingsPanel({
 
       <div className="p-4 space-y-4 max-h-96 overflow-y-auto">
         <div>
-          <label className="block text-xs font-medium text-gray-300 mb-2">Label</label>
+          <label className="block text-xs font-medium text-gray-300 mb-2">
+            Label
+          </label>
           <input
             className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             //@ts-ignore
             value={selectedNode.data.label ?? ""}
-            onChange={(e) => onUpdateNode(selectedNode.id, { label: e.target.value })}
+            onChange={(e) =>
+              onUpdateNode(selectedNode.id, { label: e.target.value })
+            }
           />
         </div>
 
         {selectedNode.type === "webhookTrigger" && (
           <div>
-            <label className="block text-xs font-medium text-gray-300 mb-2">Path</label>
+            <label className="block text-xs font-medium text-gray-300 mb-2">
+              Path
+            </label>
             <input
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               //@ts-ignore
               value={selectedNode.data.path ?? ""}
-              onChange={(e) => onUpdateNode(selectedNode.id, { path: e.target.value })}
+              onChange={(e) =>
+                onUpdateNode(selectedNode.id, { path: e.target.value })
+              }
             />
           </div>
         )}
 
-        {(selectedNode.type === "telegramAction" || selectedNode.type === "emailAction") && (
+        {(selectedNode.type === "telegramAction" ||
+          selectedNode.type === "emailAction") && (
           <div>
-            <label className="block text-xs font-medium text-gray-300 mb-2">Credential</label>
+            <label className="block text-xs font-medium text-gray-300 mb-2">
+              Credential
+            </label>
             <select
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               //@ts-ignore
               value={selectedNode.data.credentialId ?? ""}
               onChange={(e) => {
                 const val = e.target.value;
-                const cred = credentials.find((c) => String(c._id ?? c.id) === val);
+                const cred = credentials.find(
+                  (c) => String(c._id ?? c.id) === val
+                );
                 const credTitle = cred?.title ?? cred?.name ?? "";
                 onUpdateNode(selectedNode.id, {
                   credentialId: val,
@@ -85,13 +100,77 @@ export default function NodeSettingsPanel({
               }}
             >
               <option value="">-- Select credential --</option>
-              {(selectedNode.type === "telegramAction" ? telegramCreds : emailCreds).map((c) => (
+              {(selectedNode.type === "telegramAction"
+                ? telegramCreds
+                : emailCreds
+              ).map((c) => (
                 <option key={c._id ?? c.id} value={c._id ?? c.id}>
                   {c.title ?? c.name}
                 </option>
               ))}
             </select>
           </div>
+        )}
+
+        {selectedNode.type === "aiAgent" && (
+          <>
+            <div>
+              <label className="block text-xs font-medium text-gray-300 mb-2">
+                System Prompt
+              </label>
+              <textarea
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                rows={3}
+                //@ts-ignore
+                value={selectedNode.data.systemPrompt ?? ""}
+                onChange={(e) =>
+                  onUpdateNode(selectedNode.id, {
+                    systemPrompt: e.target.value,
+                  })
+                }
+                placeholder="You are a helpful assistant..."
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-300 mb-2">
+                  Temperature
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="2"
+                  step="0.1"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  //@ts-ignore
+                  value={selectedNode.data.temperature ?? 0.7}
+                  onChange={(e) =>
+                    onUpdateNode(selectedNode.id, {
+                      temperature: parseFloat(e.target.value),
+                    })
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-300 mb-2">
+                  Max Tokens
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="4000"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  //@ts-ignore
+                  value={selectedNode.data.maxTokens ?? 1000}
+                  onChange={(e) =>
+                    onUpdateNode(selectedNode.id, {
+                      maxTokens: parseInt(e.target.value),
+                    })
+                  }
+                />
+              </div>
+            </div>
+          </>
         )}
 
         <div className="pt-2">

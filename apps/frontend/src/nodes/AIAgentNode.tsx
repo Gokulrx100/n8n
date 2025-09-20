@@ -1,7 +1,0 @@
-const AIAgentNode = () => {
-  return (
-    <div>AIAgentNode</div>
-  )
-}
-
-export default AIAgentNode
