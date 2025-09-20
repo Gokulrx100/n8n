@@ -18,15 +18,27 @@ import AddNodeModel from "../components/AddNodeModel";
 import { useWorkflowEditor } from "../hooks/useWorkflowEditor";
 
 import ManualTriggerNode from "../nodes/Triggers/ManualTriggerNode";
+import AIAgentNode from "../nodes/AIAgentNode";
 import WebhookTriggerNode from "../nodes/Triggers/WebhookTriggerNode";
 import TelegramActionNode from "../nodes/Actions/TelegramActionNode";
 import EmailActionNode from "../nodes/Actions/EmailActionNode";
+import GeminiModelNode from "../nodes/Models/GeminiModelNode";
+import RedisMemoryNode from "../nodes/Memory/RedisMemoryNode";
+import HttpToolNode from "../nodes/Tools/HttpToolNode";
+import CodeToolNode from "../nodes/Tools/CodeToolNode";
+import WorkflowToolNode from "../nodes/Tools/WorkflowToolNode";
 
 const nodeTypes = {
   manualTrigger: ManualTriggerNode,
   webhookTrigger: WebhookTriggerNode,
   telegramAction: TelegramActionNode,
   emailAction: EmailActionNode,
+  aiAgent: AIAgentNode,
+  geminiModel: GeminiModelNode,
+  redisMemory: RedisMemoryNode,
+  httpTool: HttpToolNode,
+  codeTool: CodeToolNode,
+  workflowTool: WorkflowToolNode
 };
 
 function WorkflowEditor() {
