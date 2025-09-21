@@ -237,7 +237,28 @@ export function useWorkflowEditor(id?: string) {
     setModelData((prev) => ({ ...prev, ...updates }));
   }, []);
 
-  // Memoize the return object to prevent unnecessary re-renders
+const addNode = useCallback((nodeType: string) => {
+  const position = getNextNodePosition();
+  const defaultData = NODE_CONFIGS[nodeType as keyof typeof NODE_CONFIGS];
+  
+  if (nodeType === 'webhookTrigger' && defaultData && 'path' in defaultData && !defaultData.path) {
+    defaultData.path = `wh_${Date.now().toString(36)}`;
+  }
+  if (nodeType === 'redisMemory' && defaultData && 'sessionId' in defaultData) {
+    defaultData.sessionId = `session_${Date.now()}`;
+  }
+  
+  const newNode = {
+    id: `${nodeType}-${Date.now()}`,
+    type: nodeType,
+    position,
+    data: defaultData || { label: nodeType },
+  };
+  
+  setNodes((nds) => [...nds, newNode]);
+  setSelectedNode(newNode);
+}, [getNextNodePosition, setNodes, setSelectedNode]);
+
   return useMemo(() => ({
     // State
     nodes,
@@ -262,6 +283,7 @@ export function useWorkflowEditor(id?: string) {
     closeModel,
     handleModelSubmit,
     updateModelData,
+    addNode,
   }), [
     nodes,
     edges,
@@ -284,5 +306,6 @@ export function useWorkflowEditor(id?: string) {
     closeModel,
     handleModelSubmit,
     updateModelData,
+    addNode,
   ]);
 }
