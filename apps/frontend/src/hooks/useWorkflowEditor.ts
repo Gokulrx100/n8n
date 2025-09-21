@@ -68,11 +68,6 @@ export function useWorkflowEditor(id?: string) {
   const [credentials, setCredentials] = useState<any[]>([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
 
-  // Model states
-  const [modelOpen, setModelOpen] = useState(false);
-  const [modelType, setModelType] = useState<string | null>(null);
-  const [modelData, setModelData] = useState<Record<string, any>>({});
-
   const authHeaders = useCallback(() => ({
     token: localStorage.getItem("token") ?? "",
   }), []);
@@ -117,21 +112,6 @@ export function useWorkflowEditor(id?: string) {
     );
     return { x: rightmostNode.position.x + 100, y: rightmostNode.position.y };
   }, [nodes]);
-
-  const createNodeWithData = useCallback(
-    (type: string, data: Record<string, any>) => {
-      const position = getNextNodePosition();
-      const nid = `${type}-${Date.now()}`;
-      const node: Node = { id: nid, type, position, data };
-      setNodes((nds) => nds.concat(node));
-
-      setTimeout(() => {
-        zoomOut({ duration: 300 });
-        setTimeout(() => fitView({ duration: 500, padding: 0.1 }), 100);
-      }, 50);
-    },
-    [getNextNodePosition, setNodes, zoomOut, fitView]
-  );
 
   const saveWorkflow = useCallback(
     async (workflowTitle: string) => {
@@ -202,41 +182,6 @@ export function useWorkflowEditor(id?: string) {
     [setNodes, selectedNode]
   );
 
-  const openNodeModel = useCallback((type: string) => {
-    setModelType(type);
-    setModelData(NODE_CONFIGS[type as keyof typeof NODE_CONFIGS] || {});
-    setModelOpen(true);
-  }, []);
-
-  const closeModel = useCallback(() => {
-    setModelOpen(false);
-    setModelType(null);
-    setModelData({});
-  }, []);
-
-  const handleModelSubmit = useCallback(() => {
-    if (!modelType) return;
-    const data = { ...modelData };
-
-    if (data.credentialId) {
-      const cred = credentials.find(
-        (c) => String(c._id ?? c.id) === String(data.credentialId)
-      );
-      if (cred) data.credentialTitle = cred.title ?? cred.name;
-    }
-
-    if (modelType === "webhookTrigger" && !data.path) {
-      data.path = `wh_${Date.now().toString(36)}`;
-    }
-
-    createNodeWithData(modelType, data);
-    closeModel();
-  }, [modelType, modelData, credentials, createNodeWithData, closeModel]);
-
-  const updateModelData = useCallback((updates: Record<string, any>) => {
-    setModelData((prev) => ({ ...prev, ...updates }));
-  }, []);
-
 const addNode = useCallback((nodeType: string) => {
   const position = getNextNodePosition();
   const defaultData = NODE_CONFIGS[nodeType as keyof typeof NODE_CONFIGS];
@@ -257,7 +202,12 @@ const addNode = useCallback((nodeType: string) => {
   
   setNodes((nds) => [...nds, newNode]);
   setSelectedNode(newNode);
-}, [getNextNodePosition, setNodes, setSelectedNode]);
+
+  setTimeout(() => {
+      zoomOut({ duration: 300 });
+      setTimeout(() => fitView({ duration: 500, padding: 0.1 }), 100);
+    }, 50);
+}, [getNextNodePosition, setNodes, setSelectedNode, zoomOut, fitView]);
 
   return useMemo(() => ({
     // State
@@ -267,9 +217,6 @@ const addNode = useCallback((nodeType: string) => {
     saving,
     credentials,
     selectedNode,
-    modelOpen,
-    modelType,
-    modelData,
     // Handlers
     onNodesChange,
     onEdgesChange,
@@ -279,10 +226,6 @@ const addNode = useCallback((nodeType: string) => {
     updateNodeData,
     deleteSelectedNode,
     saveWorkflow,
-    openNodeModel,
-    closeModel,
-    handleModelSubmit,
-    updateModelData,
     addNode,
   }), [
     nodes,
@@ -291,9 +234,6 @@ const addNode = useCallback((nodeType: string) => {
     saving,
     credentials,
     selectedNode,
-    modelOpen,
-    modelType,
-    modelData,
     onNodesChange,
     onEdgesChange,
     onConnect,
@@ -302,10 +242,6 @@ const addNode = useCallback((nodeType: string) => {
     updateNodeData,
     deleteSelectedNode,
     saveWorkflow,
-    openNodeModel,
-    closeModel,
-    handleModelSubmit,
-    updateModelData,
     addNode,
   ]);
 }

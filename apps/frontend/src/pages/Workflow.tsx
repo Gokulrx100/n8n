@@ -118,6 +118,7 @@ function WorkflowEditor() {
               style: { stroke: "#3b82f6", strokeWidth: 2 },
               type: "bezier",
             }}
+            edgesFocusable={true}
           >
             <Background color="#374151" gap={18} variant={BackgroundVariant.Dots} />
             <Controls className="bg-gray-800 border border-gray-700" />
