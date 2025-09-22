@@ -57,6 +57,14 @@ const NODE_CONFIGS = {
   }
 };
 
+const CONNECTION_RULES = {
+  redisMemory: ['memory'],
+  geminiModel: ['chatModel'],
+  httpTool: ['tool'],
+  codeTool: ['tool'],
+  workflowTool: ['tool']
+};
+
 export function useWorkflowEditor(id?: string) {
   const navigate = useNavigate();
   const { fitView, zoomOut } = useReactFlow();
@@ -106,12 +114,13 @@ export function useWorkflowEditor(id?: string) {
   }, [id, authHeaders]); 
 
   const getNextNodePosition = useCallback(() => {
-    if (nodes.length === 0) return { x: 200, y: 250 };
-    const rightmostNode = nodes.reduce((prev, current) =>
-      current.position.x > prev.position.x ? current : prev
-    );
-    return { x: rightmostNode.position.x + 100, y: rightmostNode.position.y };
-  }, [nodes]);
+  if (nodes.length === 0) return { x: 200, y: 250 };
+  const rightmostNode = nodes.reduce((prev, current) =>
+    current.position.x > prev.position.x ? current : prev
+  );
+  const spacing = rightmostNode.type === 'aiAgent' ? 220 : 120;
+  return { x: rightmostNode.position.x + spacing, y: rightmostNode.position.y };
+}, [nodes]);
 
   const saveWorkflow = useCallback(
     async (workflowTitle: string) => {
@@ -209,6 +218,20 @@ const addNode = useCallback((nodeType: string) => {
     }, 50);
 }, [getNextNodePosition, setNodes, setSelectedNode, zoomOut, fitView]);
 
+const isValidConnection = useCallback((connection: any) => {
+  const sourceNode = nodes.find(n => n.id === connection.source);
+  const targetNode = nodes.find(n => n.id === connection.target);
+  const sourceType = sourceNode?.type;
+  const targetType = targetNode?.type;
+  if (!sourceNode || !targetNode) return false;
+  if (connection.source === connection.target) return false;
+  const subNodeRules = CONNECTION_RULES[sourceType as keyof typeof CONNECTION_RULES];
+  if (subNodeRules) {
+    return targetType === 'aiAgent' && subNodeRules.includes(connection.targetHandle);
+  }
+  return true;
+}, [nodes]);
+
   return useMemo(() => ({
     // State
     nodes,
@@ -227,6 +250,7 @@ const addNode = useCallback((nodeType: string) => {
     deleteSelectedNode,
     saveWorkflow,
     addNode,
+    isValidConnection
   }), [
     nodes,
     edges,
@@ -243,5 +267,6 @@ const addNode = useCallback((nodeType: string) => {
     deleteSelectedNode,
     saveWorkflow,
     addNode,
+    isValidConnection
   ]);
 }

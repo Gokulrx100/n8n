@@ -6,11 +6,11 @@ import {
   MessageSquare, 
   Mail, 
   Bot, 
-  Cpu, 
-  Database, 
-  Globe, 
-  Code, 
-  Workflow,
+  // Cpu, 
+  // Database, 
+  // Globe, 
+  // Code, 
+  // Workflow,
   ChevronDown,
 } from "lucide-react";
 
@@ -85,57 +85,57 @@ const ToolBoxSidebar = memo(({ onAddNode }: ToolBoxSidebarProps) => {
         }
       ]
     },
-    {
-      id: "aiComponents",
-      title: "AI Components",
-      icon: <Cpu size={16} />,
-      color: "text-orange-400",
-      items: [
-        {
-          type: "geminiModel",
-          label: "Gemini Model",
-          description: "AI model configuration",
-          icon: <Cpu size={16} />,
-          color: "bg-red-400"
-        },
-        {
-          type: "redisMemory",
-          label: "Redis Memory",
-          description: "Conversation memory",
-          icon: <Database size={16} />,
-          color: "bg-red-500"
-        }
-      ]
-    },
-    {
-      id: "aiTools",
-      title: "AI Tools",
-      icon: <Code size={16} />,
-      color: "text-red-400",
-      items: [
-        {
-          type: "httpTool",
-          label: "HTTP Tool",
-          description: "Make HTTP requests",
-          icon: <Globe size={16} />,
-          color: "bg-purple-500"
-        },
-        {
-          type: "codeTool",
-          label: "Code Tool",
-          description: "Execute custom code",
-          icon: <Code size={16} />,
-          color: "bg-green-600"
-        },
-        {
-          type: "workflowTool",
-          label: "Workflow Tool",
-          description: "Call another workflow",
-          icon: <Workflow size={16} />,
-          color: "bg-blue-600"
-        }
-      ]
-    }
+    // {
+    //   id: "aiComponents",
+    //   title: "AI Components",
+    //   icon: <Cpu size={16} />,
+    //   color: "text-orange-400",
+    //   items: [
+    //     {
+    //       type: "geminiModel",
+    //       label: "Gemini Model",
+    //       description: "AI model configuration",
+    //       icon: <Cpu size={16} />,
+    //       color: "bg-red-400"
+    //     },
+    //     {
+    //       type: "redisMemory",
+    //       label: "Redis Memory",
+    //       description: "Conversation memory",
+    //       icon: <Database size={16} />,
+    //       color: "bg-red-500"
+    //     }
+    //   ]
+    // },
+    // {
+    //   id: "aiTools",
+    //   title: "AI Tools",
+    //   icon: <Code size={16} />,
+    //   color: "text-red-400",
+    //   items: [
+    //     {
+    //       type: "httpTool",
+    //       label: "HTTP Tool",
+    //       description: "Make HTTP requests",
+    //       icon: <Globe size={16} />,
+    //       color: "bg-purple-500"
+    //     },
+    //     {
+    //       type: "codeTool",
+    //       label: "Code Tool",
+    //       description: "Execute custom code",
+    //       icon: <Code size={16} />,
+    //       color: "bg-green-600"
+    //     },
+    //     {
+    //       type: "workflowTool",
+    //       label: "Workflow Tool",
+    //       description: "Call another workflow",
+    //       icon: <Workflow size={16} />,
+    //       color: "bg-blue-600"
+    //     }
+    //   ]
+    // }
   ];
 
   return (

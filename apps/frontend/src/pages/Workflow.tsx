@@ -62,6 +62,7 @@ function WorkflowEditor() {
     deleteSelectedNode,
     saveWorkflow,
     addNode,
+    isValidConnection
   } = useWorkflowEditor(id);
 
   const [saveModelOpen, setSaveModelOpen] = useState(false);
@@ -119,6 +120,7 @@ function WorkflowEditor() {
               type: "bezier",
             }}
             edgesFocusable={true}
+            isValidConnection={isValidConnection}
           >
             <Background color="#374151" gap={18} variant={BackgroundVariant.Dots} />
             <Controls className="bg-gray-800 border border-gray-700" />
