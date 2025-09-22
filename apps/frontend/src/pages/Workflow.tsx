@@ -14,7 +14,6 @@ import WorkflowHeader from "../components/workflow/WorkflowHeader";
 import ToolBoxSidebar from "../components/workflow/ToolBoxSidebar";
 import NodeSettingsPanel from "../components/workflow/NodeSettingsPanel";
 import SaveWorkflowModel from "../components/SaveWorkflowModel";
-import AddNodeModel from "../components/AddNodeModel";
 import { useWorkflowEditor } from "../hooks/useWorkflowEditor";
 
 import ManualTriggerNode from "../nodes/Triggers/ManualTriggerNode";
@@ -54,9 +53,6 @@ function WorkflowEditor() {
     saving,
     credentials,
     selectedNode,
-    modelOpen,
-    modelType,
-    modelData,
     onNodesChange,
     onEdgesChange,
     onConnect,
@@ -65,10 +61,7 @@ function WorkflowEditor() {
     updateNodeData,
     deleteSelectedNode,
     saveWorkflow,
-    openNodeModel,
-    closeModel,
-    handleModelSubmit,
-    updateModelData,
+    addNode,
   } = useWorkflowEditor(id);
 
   const [saveModelOpen, setSaveModelOpen] = useState(false);
@@ -107,7 +100,7 @@ function WorkflowEditor() {
       />
 
       <div className="flex-1 relative bg-gray-900">
-        <ToolBoxSidebar onAddNode={openNodeModel} />
+        <ToolBoxSidebar onAddNode={addNode} />
 
         <div ref={wrapperRef} className="w-full h-full">
           <ReactFlow
@@ -125,6 +118,7 @@ function WorkflowEditor() {
               style: { stroke: "#3b82f6", strokeWidth: 2 },
               type: "bezier",
             }}
+            edgesFocusable={true}
           >
             <Background color="#374151" gap={18} variant={BackgroundVariant.Dots} />
             <Controls className="bg-gray-800 border border-gray-700" />
@@ -162,17 +156,8 @@ function WorkflowEditor() {
         }}
         onTitleChange={setSaveModelTitle}
       />
-
-      <AddNodeModel
-        isOpen={modelOpen}
-        modelType={modelType}
-        modelData={modelData}
-        credentials={credentials}
-        onClose={closeModel}
-        onSubmit={handleModelSubmit}
-        onDataChange={updateModelData}
-      />
     </div>
+
   );
 }
 

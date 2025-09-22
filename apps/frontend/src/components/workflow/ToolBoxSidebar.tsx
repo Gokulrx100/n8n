@@ -1,4 +1,3 @@
-// apps/frontend/src/components/workflow/ToolBoxSidebar.tsx
 import { memo, useState } from "react";
 import { 
   Play, 
@@ -23,7 +22,6 @@ const ToolBoxSidebar = memo(({ onAddNode }: ToolBoxSidebarProps) => {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   const toggleSection = (section: string) => {
-    // If clicking the same section, close it. Otherwise, open the new section
     setExpandedSection(prev => prev === section ? null : section);
   };
 
@@ -142,19 +140,17 @@ const ToolBoxSidebar = memo(({ onAddNode }: ToolBoxSidebarProps) => {
 
   return (
     <div className="absolute left-4 top-20 w-64 bg-gray-800/95 backdrop-blur-sm border border-gray-700 rounded-lg shadow-xl z-10 max-h-[calc(100vh-6rem)] overflow-hidden">
-      {/* Header */}
+
       <div className="p-4 border-b border-gray-700">
         <h3 className="text-lg font-semibold text-white text-center">ToolBox</h3>
       </div>
 
-      {/* Collapsible Sections */}
       <div className="max-h-[calc(100vh-12rem)] overflow-y-auto">
         {sections.map((section) => {
           const isExpanded = expandedSection === section.id;
           
           return (
             <div key={section.id} className="border-b border-gray-700 last:border-b-0">
-              {/* Section Header */}
               <button
                 onClick={() => toggleSection(section.id)}
                 className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-700/50 transition-colors duration-200"
@@ -172,7 +168,6 @@ const ToolBoxSidebar = memo(({ onAddNode }: ToolBoxSidebarProps) => {
                 </div>
               </button>
 
-              {/* Section Items with Smooth Animation */}
               <div 
                 className={`overflow-hidden transition-all duration-300 ease-in-out ${
                   isExpanded 
@@ -213,7 +208,6 @@ const ToolBoxSidebar = memo(({ onAddNode }: ToolBoxSidebarProps) => {
         })}
       </div>
 
-      {/* Custom CSS for animations */}
       <style>{`
         @keyframes slideInFromTop {
           from {
