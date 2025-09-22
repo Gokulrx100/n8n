@@ -4,6 +4,7 @@ import type { Node } from "@xyflow/react";
 interface NodeSettingsPanelProps {
   selectedNode: Node | null;
   credentials: any[];
+  workflows: any[];
   onClose: () => void;
   onUpdateNode: (nodeId: string, updates: any) => void;
   onDeleteNode: () => void;
@@ -15,6 +16,7 @@ const INPUT_CLASS =
 export default function NodeSettingsPanel({
   selectedNode,
   credentials,
+  workflows, // Add this line
   onClose,
   onUpdateNode,
   onDeleteNode,
@@ -31,6 +33,10 @@ export default function NodeSettingsPanel({
         .includes(p)
     )
   );
+
+  const getNodeData = (key: string) => {
+    return (selectedNode?.data as any)?.[key];
+  };
 
   const renderNodeContent = () => {
     const commonFields = (
@@ -505,16 +511,59 @@ export default function NodeSettingsPanel({
             {commonFields}
             <div>
               <label className="block text-xs font-medium text-gray-300 mb-2">
-                Workflow ID
+                Target Workflow
               </label>
-              <input
+              <select
                 className={INPUT_CLASS}
-                //@ts-ignore
-                value={selectedNode.data.workflowId ?? ""}
-                onChange={(e) =>
-                  onUpdateNode(selectedNode.id, { workflowId: e.target.value })
+                value={getNodeData("workflowId") || ""}
+                onChange={(e) => {
+                  const selectedWorkflow = workflows.find(
+                    (w) => w._id === e.target.value
+                  );
+                  onUpdateNode(selectedNode.id, {
+                    workflowId: e.target.value,
+                    workflowTitle: selectedWorkflow?.title || "",
+                  });
+                }}
+              >
+                <option value="">Select a workflow</option>
+                {workflows.map((workflow) => (
+                  <option key={workflow._id} value={workflow._id}>
+                    {workflow.title}{" "}
+                    {workflow.enabled ? "(Active)" : "(Inactive)"}
+                  </option>
+                ))}
+              </select>
+              {getNodeData("workflowId") && (
+                <div className="mt-1 text-xs text-gray-400">
+                  Selected:{" "}
+                  {String(getNodeData("workflowTitle") || "Unknown Workflow")}
+                </div>
+              )}
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-300 mb-2">
+                Input Data (JSON)
+              </label>
+              <textarea
+                className={INPUT_CLASS}
+                rows={3}
+                value={
+                  getNodeData("inputData")
+                    ? JSON.stringify(getNodeData("inputData"), null, 2)
+                    : "{}"
                 }
-                placeholder="Enter workflow ID to call"
+                onChange={(e) => {
+                  try {
+                    const parsed = JSON.parse(e.target.value);
+                    onUpdateNode(selectedNode.id, { inputData: parsed });
+                  } catch {
+                    onUpdateNode(selectedNode.id, {
+                      inputDataRaw: e.target.value,
+                    });
+                  }
+                }}
+                placeholder='{"key": "value"}'
               />
             </div>
           </>

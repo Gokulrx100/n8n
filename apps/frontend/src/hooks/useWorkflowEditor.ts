@@ -74,6 +74,7 @@ export function useWorkflowEditor(id?: string) {
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
   const [credentials, setCredentials] = useState<any[]>([]);
+   const [workflows, setWorkflows] = useState<any[]>([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
 
   const authHeaders = useCallback(() => ({
@@ -91,9 +92,21 @@ export function useWorkflowEditor(id?: string) {
     }
   }, [authHeaders]);
 
+  const fetchWorkflows = useCallback(async () => {
+    try {
+      const res = await axios.get(`${BASE}/workflows`, {
+        headers: authHeaders(),
+      });
+      setWorkflows(res.data?.workflows ?? res.data ?? []);
+    } catch {
+      setWorkflows([]);
+    }
+  }, [authHeaders]);
+
   useEffect(() => {
     fetchCredentials();
-  }, [fetchCredentials]);
+    fetchWorkflows();
+  }, [fetchCredentials, fetchWorkflows]);
 
   useEffect(() => {
     if (!id) return;
@@ -239,6 +252,7 @@ const isValidConnection = useCallback((connection: any) => {
     title,
     saving,
     credentials,
+    workflows,
     selectedNode,
     // Handlers
     onNodesChange,
@@ -257,6 +271,7 @@ const isValidConnection = useCallback((connection: any) => {
     title,
     saving,
     credentials,
+    workflows,
     selectedNode,
     onNodesChange,
     onEdgesChange,

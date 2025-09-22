@@ -52,6 +52,7 @@ function WorkflowEditor() {
     title,
     saving,
     credentials,
+    workflows,
     selectedNode,
     onNodesChange,
     onEdgesChange,
@@ -141,6 +142,7 @@ function WorkflowEditor() {
         <NodeSettingsPanel
           selectedNode={selectedNode}
           credentials={credentials}
+          workflows={workflows}
           onClose={() => setSelectedNode(null)}
           onUpdateNode={updateNodeData}
           onDeleteNode={deleteSelectedNode}
