@@ -37,7 +37,7 @@ const CredentialModel = memo(({
   const [credTitle, setCredTitle] = useState("");
   const [botToken, setBotToken] = useState("");
   const [emailAddr, setEmailAddr] = useState("");
-  const [appPassword, setAppPassword] = useState("");
+  const [resendApiKey, setResendApiKey] = useState("");
 
   const isEditing = !!editingCredential;
 
@@ -50,7 +50,7 @@ const CredentialModel = memo(({
         setBotToken(editingCredential.data.botToken || "");
       } else if (editingCredential.platform === "email") {
         setEmailAddr(editingCredential.data.email || "");
-        setAppPassword(editingCredential.data.appPassword || "");
+        setResendApiKey(editingCredential.data.appPassword || "");
       }
     }
   }, [editingCredential]);
@@ -59,7 +59,7 @@ const CredentialModel = memo(({
     setCredTitle("");
     setBotToken("");
     setEmailAddr("");
-    setAppPassword("");
+    setResendApiKey("");
     setCredentialPlatform("email");
   };
 
@@ -81,7 +81,7 @@ const CredentialModel = memo(({
       return;
     }
 
-    if (credentialPlatform === "email" && (!emailAddr.trim() || !appPassword.trim())) {
+    if (credentialPlatform === "email" && (!emailAddr.trim() || !resendApiKey.trim())) {
       alert("Please provide both email and app password");
       return;
     }
@@ -91,7 +91,7 @@ const CredentialModel = memo(({
         ? { botToken: botToken.trim() }
         : {
             email: emailAddr.trim(),
-            appPassword: appPassword.trim(),
+            appPassword: resendApiKey.trim(),
           };
 
     const payload = {
@@ -167,12 +167,12 @@ const CredentialModel = memo(({
 
               <div>
                 <label className="block text-gray-300 text-sm mb-1">
-                  App Password
+                  Resend API Key
                 </label>
                 <input
-                  type="password"
-                  value={appPassword}
-                  onChange={(e) => setAppPassword(e.target.value)}
+                  type="text"
+                  value={resendApiKey}
+                  onChange={(e) => setResendApiKey(e.target.value)}
                   className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600"
                   required
                   placeholder={isEditing ? "Leave blank to keep current password" : ""}
