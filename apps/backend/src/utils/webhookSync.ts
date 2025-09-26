@@ -12,7 +12,7 @@ export async function syncWebhooksForWorkflow(
   workflowId: Types.ObjectId,
   nodes: NodeLike[]
 ) {
-  const webhookNodes = nodes.filter((n) => n.type === "webhook");
+  const webhookNodes = nodes.filter((n) => n.type === "webhookTrigger");
   const referencedWebhookIds: string[] = [];
 
   for (const node of webhookNodes) {

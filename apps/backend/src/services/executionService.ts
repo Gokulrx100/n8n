@@ -2,6 +2,7 @@ import { Types } from "mongoose";
 import workFlowModel, { IWorkFlow } from "../models/WorkFlow";
 import CredentialModel, { ICredential } from "../models/Credentials";
 import { Resend } from 'resend';
+import axios from "axios";
 
 interface ExecutionResult {
   executionId: string;
@@ -154,24 +155,22 @@ async function executeNode(node: any, context: any): Promise<{ success: boolean;
 async function executeEmailAction(node: any, context: any) {
   const { credentialId, to, subject, body } = node.data || {};
   
-  if (!credentialId) {
-    throw new Error("No email credential selected");
-  }
-
-  const credential: ICredential | null = await CredentialModel.findById(credentialId);
-  if (!credential || credential.platform !== 'email') {
-    throw new Error("Email credential not found");
-  }
-
-  const { email: fromEmail } = credential.data;
-  if (!fromEmail) {
-    throw new Error("No sender email configured in credential");
-  }
-
-  // Use Resend API key from environment variable
-  const resendApiKey = process.env.RESEND_API_KEY;
+  // For MVP: Use default configuration regardless of credential selection
+  // TODO: Later implement per-user API keys and verified domains
+  const resendApiKey = process.env.RESEND_API_KEY!;
+  const defaultFromEmail = process.env.DEFAULT_FROM_EMAIL!;
+  
   if (!resendApiKey) {
     throw new Error("RESEND_API_KEY not configured in environment");
+  }
+
+  //  validate credential exists (for future compatibility)
+  if (credentialId) {
+    const credential: ICredential | null = await CredentialModel.findById(credentialId);
+    if (!credential || credential.platform !== 'email') {
+      throw new Error("Email credential not found");
+    }
+    // Note: We're not using the credential data yet, but validating it exists
   }
 
   const resend = new Resend(resendApiKey);
@@ -182,13 +181,11 @@ async function executeEmailAction(node: any, context: any) {
     throw new Error("No recipient email specified");
   }
 
-  // Process template variables
-  const processedSubject = processTemplate(subject || 'Notification', context);
+  const processedSubject = processTemplate(subject || 'Notification from Workflow', context);
   const processedBody = processTemplate(body || 'Hello from your workflow!', context);
 
-  // Send email using Resend API
   const { data, error } = await resend.emails.send({
-    from: fromEmail,
+    from: defaultFromEmail,
     to: [recipient],
     subject: processedSubject,
     html: processedBody.replace(/\n/g, '<br>')
@@ -203,7 +200,7 @@ async function executeEmailAction(node: any, context: any) {
     data: {
       message: "Email sent successfully",
       emailId: data?.id,
-      from: fromEmail,
+      from: defaultFromEmail,
       to: recipient,
       subject: processedSubject,
       sentAt: new Date().toISOString()
@@ -214,15 +211,64 @@ async function executeEmailAction(node: any, context: any) {
 async function executeTelegramAction(node: any, context: any) {
   const { credentialId, chatId, message } = node.data || {};
   
-  // Placeholder implementation
-  return {
-    success: true,
-    data: {
-      message: "Telegram message sent (placeholder)",
-      chatId: chatId || context.triggerData?.chatId,
-      text: processTemplate(message || 'Hello!', context)
+  if (!credentialId) {
+    throw new Error("No Telegram credential selected");
+  }
+
+  const credential: ICredential | null = await CredentialModel.findById(credentialId);
+  if (!credential || credential.platform !== 'telegram') {
+    throw new Error("Telegram credential not found");
+  }
+
+  const { botToken } = credential.data;
+  if (!botToken) {
+    throw new Error("Bot token not configured in credential");
+  }
+
+  // Determine chat ID (can come from node config, trigger data, or previous node output)
+  const targetChatId = chatId || context.triggerData?.chatId || context.triggerData?.chat_id;
+  if (!targetChatId) {
+    throw new Error("No chat ID specified");
+  }
+
+  // Process template variables in message
+  const processedMessage = processTemplate(message || 'Hello from your workflow!', context);
+
+  // Send message via Telegram Bot API using axios
+  const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+  
+  try {
+    const response = await axios.post(telegramApiUrl, {
+      chat_id: targetChatId,
+      text: processedMessage,
+      parse_mode: 'HTML' // Allow HTML formatting
+    });
+
+    const result = response.data;
+
+    if (!result.ok) {
+      throw new Error(result.description || 'Failed to send Telegram message');
     }
-  };
+
+    return {
+      success: true,
+      data: {
+        message: "Telegram message sent successfully",
+        messageId: result.result.message_id,
+        chatId: targetChatId,
+        text: processedMessage,
+        sentAt: new Date().toISOString()
+      }
+    };
+
+  } catch (error: any) {
+    // Handle axios errors
+    if (error.response) {
+      const errorMsg = error.response.data?.description || error.response.statusText || 'Telegram API error';
+      throw new Error(`Telegram send failed: ${errorMsg}`);
+    }
+    throw new Error(`Telegram send failed: ${error.message || 'Unknown error'}`);
+  }
 }
 
 function processTemplate(template: string, context: any): string {
