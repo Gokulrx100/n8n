@@ -54,7 +54,7 @@ const WorkflowsList = memo(({ workflows, loading, onDelete }: WorkflowsListProps
       {workflows.map((workflow) => (
         <div
           key={workflow._id}
-          className="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:bg-gray-750 transition-colors cursor-pointer"
+          className="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:bg-gray-700 transition-colors cursor-pointer"
           onClick={() => navigate(`/create/workflow/${workflow._id}`)}
         >
           <div className="flex items-center justify-between">

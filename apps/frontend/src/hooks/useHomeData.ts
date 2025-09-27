@@ -44,7 +44,6 @@ export function useHomeData() {
       });
       setWorkflows(response.data.workflows || []);
     } catch (err: any) {
-      console.error("Error fetching workflows:", err);
       setError("Failed to fetch workflows");
     } finally {
       setLoading(false);
@@ -60,7 +59,6 @@ export function useHomeData() {
       });
       setCredentials(response.data.credentials || []);
     } catch (err: any) {
-      console.error("Error fetching credentials:", err);
       setError("Failed to fetch credentials");
     } finally {
       setLoading(false);
@@ -104,7 +102,6 @@ export function useHomeData() {
       setShowCredentialModel(false);
       fetchCredentials();
     } catch (err: any) {
-      console.error(err);
       alert(err?.response?.data?.message || "Failed to create credential");
     } finally {
       setCreating(false);
@@ -133,7 +130,6 @@ export function useHomeData() {
       setEditingCredential(null);
       fetchCredentials();
     } catch (err: any) {
-      console.error(err);
       alert(err?.response?.data?.message || "Failed to update credential");
     } finally {
       setCreating(false);

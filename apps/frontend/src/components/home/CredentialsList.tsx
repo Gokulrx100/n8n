@@ -58,7 +58,7 @@ const CredentialsList = memo(({
       {credentials.map((credential) => (
         <div
           key={credential._id}
-          className="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:bg-gray-750 transition-colors"
+          className="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:bg-gray-700 transition-colors"
         >
           <div className="flex items-center justify-between">
             <div className="flex-1">

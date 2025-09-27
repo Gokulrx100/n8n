@@ -93,7 +93,6 @@ export function useWorkflowEditor(id?: string) {
       });
       setCredentials(res.data?.credentials ?? res.data ?? []);
     } catch (error) {
-      console.error("Failed to fetch credentials:", error);
       setCredentials([]);
     }
   }, [authHeaders]);
@@ -105,7 +104,6 @@ export function useWorkflowEditor(id?: string) {
       });
       setWorkflows(res.data?.workflows ?? res.data ?? []);
     } catch (error) {
-      console.error("Failed to fetch workflows:", error);
       setWorkflows([]);
     }
   }, [authHeaders]);
@@ -166,7 +164,6 @@ export function useWorkflowEditor(id?: string) {
         }
         setTitle(finalTitle);
       } catch (err) {
-        console.error("save failed", err);
         alert("Failed to save workflow");
       } finally {
         setSaving(false);
