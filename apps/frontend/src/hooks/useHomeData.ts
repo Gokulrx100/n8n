@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -159,20 +159,11 @@ export function useHomeData() {
     } else {
       fetchCredentials();
     }
-  }, [activeTab]);
+  }, [activeTab, fetchWorkflows, fetchCredentials]);
 
-  useEffect(() => {
-    fetchWorkflows();
-  }, [fetchWorkflows]);
+  const itemsCount = activeTab === "workflows" ? workflows.length : credentials.length;
 
-  // Memoize expensive calculations
-  const itemsCount = useMemo(() => 
-    activeTab === "workflows" ? workflows.length : credentials.length,
-    [activeTab, workflows.length, credentials.length]
-  );
-
-  // Memoize the return object to prevent unnecessary re-renders
-  return useMemo(() => ({
+  return {
     // State
     activeTab,
     workflows,
@@ -195,15 +186,5 @@ export function useHomeData() {
     fetchWorkflows,
     fetchCredentials,
     closeCredentialModel,
-  }), [
-    activeTab,
-    workflows,
-    credentials,
-    loading,
-    error,
-    showCredentialModel,
-    creating,
-    editingCredential,
-    itemsCount,
-  ]);
+  };
 }

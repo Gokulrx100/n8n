@@ -1,11 +1,16 @@
-import { useCallback, useState, useEffect, useMemo } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useNodesState, useEdgesState, useReactFlow, addEdge, type Node, type Edge } from "@xyflow/react";
 import axios from "axios";
 
 const BASE = import.meta.env.VITE_BASE_API!;
 
-const NODE_CONFIGS = {
+interface NodeConfig {
+  label: string;
+  [key: string]: any;
+}
+
+const NODE_CONFIGS: Record<string, NodeConfig> = {
   manualTrigger: { label: "Manual", payload: "" },
   webhookTrigger: {
     label: "Webhook",
@@ -74,7 +79,7 @@ export function useWorkflowEditor(id?: string) {
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
   const [credentials, setCredentials] = useState<any[]>([]);
-   const [workflows, setWorkflows] = useState<any[]>([]);
+  const [workflows, setWorkflows] = useState<any[]>([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
 
   const authHeaders = useCallback(() => ({
@@ -87,18 +92,20 @@ export function useWorkflowEditor(id?: string) {
         headers: authHeaders(),
       });
       setCredentials(res.data?.credentials ?? res.data ?? []);
-    } catch {
+    } catch (error) {
+      console.error("Failed to fetch credentials:", error);
       setCredentials([]);
     }
   }, [authHeaders]);
 
   const fetchWorkflows = useCallback(async () => {
     try {
-      const res = await axios.get(`${BASE}/workflows`, {
+      const res = await axios.get(`${BASE}/workflow`, {
         headers: authHeaders(),
       });
       setWorkflows(res.data?.workflows ?? res.data ?? []);
-    } catch {
+    } catch (error) {
+      console.error("Failed to fetch workflows:", error);
       setWorkflows([]);
     }
   }, [authHeaders]);
@@ -135,14 +142,16 @@ export function useWorkflowEditor(id?: string) {
   return { x: rightmostNode.position.x + spacing, y: rightmostNode.position.y };
 }, [nodes]);
 
+
   const saveWorkflow = useCallback(
-    async (workflowTitle: string) => {
-      if (!workflowTitle.trim()) {
+    async (workflowTitle?: string) => {
+      const finalTitle = workflowTitle || title;
+      if (!finalTitle.trim()) {
         alert("Please enter a workflow title.");
         return;
       }
       setSaving(true);
-      const payload = { title: workflowTitle, nodes, connections: edges };
+      const payload = { title: finalTitle, nodes, connections: edges };
       try {
         if (id) {
           await axios.put(`${BASE}/workflow/${id}`, payload, {
@@ -155,7 +164,7 @@ export function useWorkflowEditor(id?: string) {
           const newId = res.data.workflow?._id;
           if (newId) navigate(`/create/workflow/${newId}`, { replace: true });
         }
-        setTitle(workflowTitle);
+        setTitle(finalTitle);
       } catch (err) {
         console.error("save failed", err);
         alert("Failed to save workflow");
@@ -163,8 +172,12 @@ export function useWorkflowEditor(id?: string) {
         setSaving(false);
       }
     },
-    [id, nodes, edges, navigate, authHeaders]
+    [id, nodes, edges, title, navigate, authHeaders]
   );
+
+  const updateTitle = useCallback((newTitle: string) => {
+    setTitle(newTitle);
+  }, []);
 
   const onConnect = useCallback(
     (params: any) => setEdges((eds) => addEdge(params, eds)),
@@ -245,7 +258,7 @@ const isValidConnection = useCallback((connection: any) => {
   return true;
 }, [nodes]);
 
-  return useMemo(() => ({
+  return {
     // State
     nodes,
     edges,
@@ -254,6 +267,7 @@ const isValidConnection = useCallback((connection: any) => {
     credentials,
     workflows,
     selectedNode,
+    isEditing: !!id,
     // Handlers
     onNodesChange,
     onEdgesChange,
@@ -263,25 +277,8 @@ const isValidConnection = useCallback((connection: any) => {
     updateNodeData,
     deleteSelectedNode,
     saveWorkflow,
+    updateTitle,
     addNode,
     isValidConnection
-  }), [
-    nodes,
-    edges,
-    title,
-    saving,
-    credentials,
-    workflows,
-    selectedNode,
-    onNodesChange,
-    onEdgesChange,
-    onConnect,
-    onNodeClick,
-    setSelectedNode,
-    updateNodeData,
-    deleteSelectedNode,
-    saveWorkflow,
-    addNode,
-    isValidConnection
-  ]);
+  };
 }

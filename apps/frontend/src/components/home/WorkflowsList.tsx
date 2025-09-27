@@ -54,7 +54,8 @@ const WorkflowsList = memo(({ workflows, loading, onDelete }: WorkflowsListProps
       {workflows.map((workflow) => (
         <div
           key={workflow._id}
-          className="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:bg-gray-750 transition-colors"
+          className="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:bg-gray-750 transition-colors cursor-pointer"
+          onClick={() => navigate(`/create/workflow/${workflow._id}`)}
         >
           <div className="flex items-center justify-between">
             <div className="flex-1">
@@ -79,13 +80,10 @@ const WorkflowsList = memo(({ workflows, loading, onDelete }: WorkflowsListProps
 
             <div className="flex items-center gap-2">
               <button
-                onClick={() => navigate(`/create/workflow/${workflow._id}`)}
-                className="px-3 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-md"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => onDelete(workflow._id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(workflow._id);
+                }}
                 className="px-3 py-1 text-sm bg-red-600 hover:bg-red-700 text-white rounded-md"
               >
                 Delete

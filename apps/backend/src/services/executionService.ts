@@ -1,7 +1,7 @@
 import { Types } from "mongoose";
 import workFlowModel, { IWorkFlow } from "../models/WorkFlow";
 import CredentialModel, { ICredential } from "../models/Credentials";
-import { Resend } from 'resend';
+import * as nodemailer from 'nodemailer';
 import axios from "axios";
 
 interface ExecutionResult {
@@ -40,14 +40,29 @@ export async function executeWorkflow(workflowId: Types.ObjectId, triggerData: a
     nodeOutputs: {} as Record<string, any> 
   };
 
-  // Execute nodes starting from trigger, following connections
-  await executeNodeSequence(triggerNode, workflow, context, results);
+  try {
+    // Execute nodes starting from trigger, following connections
+    await executeNodeSequence(triggerNode, workflow, context, results);
 
-  return {
-    executionId,
-    success: true,
-    results
-  };
+    return {
+      executionId,
+      success: true,
+      results
+    };
+  } catch (error) {
+    console.error("Workflow execution failed:", error);
+    return {
+      executionId,
+      success: false,
+      results: [{
+        nodeId: triggerNode.id,
+        nodeType: triggerNode.type,
+        success: false,
+        data: null,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }]
+    };
+  }
 }
 
 async function executeNodeSequence(
@@ -113,7 +128,7 @@ async function executeNode(node: any, context: any): Promise<{ success: boolean;
           success: true,
           data: {
             message: "Manual trigger executed",
-            payload: node.data?.payload || context.triggerData,
+            payload: context.triggerData,
             timestamp: new Date().toISOString()
           }
         };
@@ -134,7 +149,6 @@ async function executeNode(node: any, context: any): Promise<{ success: boolean;
       case 'telegramAction':
         return await executeTelegramAction(node, context);
 
-      // Easy to add new node types here
       default:
         console.warn(`Unknown node type: ${node.type}`);
         return {
@@ -155,57 +169,65 @@ async function executeNode(node: any, context: any): Promise<{ success: boolean;
 async function executeEmailAction(node: any, context: any) {
   const { credentialId, to, subject, body } = node.data || {};
   
-  // For MVP: Use default configuration regardless of credential selection
-  // TODO: Later implement per-user API keys and verified domains
-  const resendApiKey = process.env.RESEND_API_KEY!;
-  const defaultFromEmail = process.env.DEFAULT_FROM_EMAIL!;
-  
-  if (!resendApiKey) {
-    throw new Error("RESEND_API_KEY not configured in environment");
+  if (!credentialId) {
+    throw new Error("No email credential selected");
   }
 
-  //  validate credential exists (for future compatibility)
-  if (credentialId) {
-    const credential: ICredential | null = await CredentialModel.findById(credentialId);
-    if (!credential || credential.platform !== 'email') {
-      throw new Error("Email credential not found");
-    }
-    // Note: We're not using the credential data yet, but validating it exists
+  const credential: ICredential | null = await CredentialModel.findById(credentialId);
+  if (!credential || credential.platform !== 'email') {
+    throw new Error("Email credential not found");
   }
 
-  const resend = new Resend(resendApiKey);
+  const { email: fromEmail, appPassword } = credential.data;
+  if (!fromEmail || !appPassword) {
+    throw new Error("Email credential missing email or app password");
+  }
 
-  // Determine recipient
-  const recipient = to || context.triggerData?.email || context.triggerData?.to;
+  const recipient = to || context.triggerData?.email;
+    
   if (!recipient) {
-    throw new Error("No recipient email specified");
+    throw new Error("No recipient email specified. Please provide 'to' field in email node or include 'email' in trigger payload");
   }
 
-  const processedSubject = processTemplate(subject || 'Notification from Workflow', context);
-  const processedBody = processTemplate(body || 'Hello from your workflow!', context);
+  const finalSubject = subject || context.triggerData?.subject;
+  const finalBody = body || context.triggerData?.message;
+  
+  const processedSubject = processTemplate(finalSubject, context);
+  const processedBody = processTemplate(finalBody, context);
 
-  const { data, error } = await resend.emails.send({
-    from: defaultFromEmail,
-    to: [recipient],
-    subject: processedSubject,
-    html: processedBody.replace(/\n/g, '<br>')
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: fromEmail,
+      pass: appPassword
+    }
   });
 
-  if (error) {
+  const mailOptions = {
+    from: fromEmail,
+    to: recipient,
+    subject: processedSubject,
+    html: processedBody.replace(/\n/g, '<br>'),
+    text: processedBody 
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    
+    return {
+      success: true,
+      data: {
+        message: "Email sent successfully",
+        messageId: info.messageId,
+        from: fromEmail,
+        to: recipient,
+        subject: processedSubject,
+        sentAt: new Date().toISOString()
+      }
+    };
+  } catch (error: any) {
     throw new Error(`Failed to send email: ${error.message}`);
   }
-
-  return {
-    success: true,
-    data: {
-      message: "Email sent successfully",
-      emailId: data?.id,
-      from: defaultFromEmail,
-      to: recipient,
-      subject: processedSubject,
-      sentAt: new Date().toISOString()
-    }
-  };
 }
 
 async function executeTelegramAction(node: any, context: any) {
@@ -225,23 +247,22 @@ async function executeTelegramAction(node: any, context: any) {
     throw new Error("Bot token not configured in credential");
   }
 
-  // Determine chat ID (can come from node config, trigger data, or previous node output)
-  const targetChatId = chatId || context.triggerData?.chatId || context.triggerData?.chat_id;
+  const targetChatId = chatId || context.triggerData?.chatId;
+    
   if (!targetChatId) {
-    throw new Error("No chat ID specified");
+    throw new Error("No chat ID specified. Please provide 'chatId' field in telegram node or include 'chatId' in trigger payload");
   }
 
-  // Process template variables in message
-  const processedMessage = processTemplate(message || 'Hello from your workflow!', context);
+  const finalMessage = message || context.triggerData?.message;
+  const processedMessage = processTemplate(finalMessage, context);
 
-  // Send message via Telegram Bot API using axios
   const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
   
   try {
     const response = await axios.post(telegramApiUrl, {
       chat_id: targetChatId,
       text: processedMessage,
-      parse_mode: 'HTML' // Allow HTML formatting
+      parse_mode: 'HTML' 
     });
 
     const result = response.data;
@@ -262,7 +283,6 @@ async function executeTelegramAction(node: any, context: any) {
     };
 
   } catch (error: any) {
-    // Handle axios errors
     if (error.response) {
       const errorMsg = error.response.data?.description || error.response.statusText || 'Telegram API error';
       throw new Error(`Telegram send failed: ${errorMsg}`);
@@ -277,16 +297,13 @@ function processTemplate(template: string, context: any): string {
   return template.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
     const cleanPath = path.trim();
     
-    // Handle trigger variables: {{trigger.email}}
-    if (cleanPath.startsWith('trigger.')) {
-      const key = cleanPath.replace('trigger.', '');
-      return context.triggerData?.[key]?.toString() || match;
+    if (context.triggerData?.[cleanPath]) {
+      return context.triggerData[cleanPath].toString();
     }
     
-    // Handle node output variables: {{nodeId.field}}
     const [nodeId, field] = cleanPath.split('.');
-    if (nodeId && field) {
-      return context.nodeOutputs?.[nodeId]?.[field]?.toString() || match;
+    if (nodeId && field && context.nodeOutputs?.[nodeId]) {
+      return context.nodeOutputs[nodeId]?.[field]?.toString() || match;
     }
     
     return match;

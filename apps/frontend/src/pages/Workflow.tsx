@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ReactFlow,
@@ -8,12 +8,12 @@ import {
   ReactFlowProvider,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import axios from "axios";
 
 import TopNav from "../components/TopNav";
 import WorkflowHeader from "../components/workflow/WorkflowHeader";
 import ToolBoxSidebar from "../components/workflow/ToolBoxSidebar";
 import NodeSettingsPanel from "../components/workflow/NodeSettingsPanel";
-import SaveWorkflowModel from "../components/SaveWorkflowModel";
 import { useWorkflowEditor } from "../hooks/useWorkflowEditor";
 
 import ManualTriggerNode from "../nodes/Triggers/ManualTriggerNode";
@@ -26,6 +26,8 @@ import RedisMemoryNode from "../nodes/Memory/RedisMemoryNode";
 import HttpToolNode from "../nodes/Tools/HttpToolNode";
 import CodeToolNode from "../nodes/Tools/CodeToolNode";
 import WorkflowToolNode from "../nodes/Tools/WorkflowToolNode";
+
+const BASE = import.meta.env.VITE_BASE_API!;
 
 const nodeTypes = {
   manualTrigger: ManualTriggerNode,
@@ -43,8 +45,6 @@ const nodeTypes = {
 function WorkflowEditor() {
   const { id } = useParams<{ id?: string }>();
   const navigate = useNavigate();
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const flowInstance = useRef<any>(null);
 
   const {
     nodes,
@@ -54,6 +54,7 @@ function WorkflowEditor() {
     credentials,
     workflows,
     selectedNode,
+    isEditing,
     onNodesChange,
     onEdgesChange,
     onConnect,
@@ -62,23 +63,55 @@ function WorkflowEditor() {
     updateNodeData,
     deleteSelectedNode,
     saveWorkflow,
+    updateTitle,
     addNode,
     isValidConnection
   } = useWorkflowEditor(id);
 
-  const [saveModelOpen, setSaveModelOpen] = useState(false);
-  const [saveModelTitle, setSaveModelTitle] = useState("");
+  // Execute workflow handler
+  const executeWorkflow = useCallback(async (payload?: any) => {
+    if (!id) {
+      alert("Please save the workflow first before executing");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        `${BASE}/execute/workflow/${id}`,
+        { triggerData: payload || {} },
+        { headers: { token } }
+      );
+      
+      const execution = response.data.execution;
+      if (execution.success) {
+        alert("Workflow executed successfully!");
+      } else {
+        const failedNodes = execution.results.filter((r: any) => !r.success);
+        alert(`Workflow execution failed. Errors: ${failedNodes.map((r: any) => r.error).join(', ')}`);
+      }
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Execution failed");
+    }
+  }, [id]);
+
+  // Listen for manual trigger execution
+  useEffect(() => {
+    const handler = (e: any) => executeWorkflow(e.detail.payload);
+    window.addEventListener('executeWorkflow', handler as EventListener);
+    return () => window.removeEventListener('executeWorkflow', handler as EventListener);
+  }, [executeWorkflow]);
 
   const handleSave = useCallback(() => {
     if (nodes.length === 0) {
       alert("Cannot save an empty workflow. Please add at least one node.");
       return;
     }
-    setSaveModelTitle(title || "");
-    setSaveModelOpen(true);
-  }, [title, nodes.length]);
+    // Use the current title from the header, or default to "Untitled Workflow"
+    const workflowTitle = title || "Untitled Workflow";
+    saveWorkflow(workflowTitle);
+  }, [title, nodes.length, saveWorkflow]);
 
-  const onInit = useCallback((instance: any) => (flowInstance.current = instance), []);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -91,7 +124,7 @@ function WorkflowEditor() {
 
   return (
     <div className="h-screen bg-gray-900 flex flex-col">
-      <TopNav activeTab="workflows" setActiveTab={() => {}} />
+      <TopNav activeTab="workflows" />
 
       <WorkflowHeader
         title={title}
@@ -99,12 +132,14 @@ function WorkflowEditor() {
         nodesCount={nodes.length}
         onBack={() => navigate("/Home")}
         onSave={handleSave}
+        onUpdateTitle={updateTitle}
+        isEditing={isEditing}
       />
 
       <div className="flex-1 relative bg-gray-900">
         <ToolBoxSidebar onAddNode={addNode} />
 
-        <div ref={wrapperRef} className="w-full h-full">
+        <div className="w-full h-full">
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -112,7 +147,6 @@ function WorkflowEditor() {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             nodeTypes={nodeTypes}
-            onInit={onInit}
             onNodeClick={onNodeClick}
             fitView
             connectionLineStyle={{ stroke: "#3b82f6", strokeWidth: 2 }}
@@ -149,19 +183,7 @@ function WorkflowEditor() {
         />
       </div>
 
-      <SaveWorkflowModel
-        isOpen={saveModelOpen}
-        title={saveModelTitle}
-        saving={saving}
-        onClose={() => setSaveModelOpen(false)}
-        onSave={(title) => {
-          saveWorkflow(title);
-          setSaveModelOpen(false);
-        }}
-        onTitleChange={setSaveModelTitle}
-      />
     </div>
-
   );
 }
 

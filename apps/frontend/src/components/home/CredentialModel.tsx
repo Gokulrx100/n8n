@@ -37,7 +37,7 @@ const CredentialModel = memo(({
   const [credTitle, setCredTitle] = useState("");
   const [botToken, setBotToken] = useState("");
   const [emailAddr, setEmailAddr] = useState("");
-  const [resendApiKey, setResendApiKey] = useState("");
+  const [appPassword, setAppPassword] = useState("");
 
   const isEditing = !!editingCredential;
 
@@ -50,7 +50,7 @@ const CredentialModel = memo(({
         setBotToken(editingCredential.data.botToken || "");
       } else if (editingCredential.platform === "email") {
         setEmailAddr(editingCredential.data.email || "");
-        setResendApiKey(editingCredential.data.appPassword || "");
+        setAppPassword(editingCredential.data.appPassword || "");
       }
     }
   }, [editingCredential]);
@@ -59,7 +59,7 @@ const CredentialModel = memo(({
     setCredTitle("");
     setBotToken("");
     setEmailAddr("");
-    setResendApiKey("");
+    setAppPassword("");
     setCredentialPlatform("email");
   };
 
@@ -81,7 +81,7 @@ const CredentialModel = memo(({
       return;
     }
 
-    if (credentialPlatform === "email" && (!emailAddr.trim() || !resendApiKey.trim())) {
+    if (credentialPlatform === "email" && (!emailAddr.trim() || !appPassword.trim())) {
       alert("Please provide both email and app password");
       return;
     }
@@ -91,7 +91,7 @@ const CredentialModel = memo(({
         ? { botToken: botToken.trim() }
         : {
             email: emailAddr.trim(),
-            appPassword: resendApiKey.trim(),
+            appPassword: appPassword.trim(),
           };
 
     const payload = {
@@ -135,12 +135,12 @@ const CredentialModel = memo(({
               value={credentialPlatform}
               onChange={(e) => setCredentialPlatform(e.target.value as "email" | "telegram")}
               required
-              disabled={isEditing} // Disable platform change when editing
+              disabled={isEditing}
               className={`w-full p-2 rounded bg-gray-700 text-white border border-gray-600 ${
                 isEditing ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
-              <option value="email">Email (Resend)</option>
+              <option value="email">Email (Gmail)</option>
               <option value="telegram">Telegram</option>
             </select>
             {isEditing && (
@@ -167,19 +167,23 @@ const CredentialModel = memo(({
 
               <div>
                 <label className="block text-gray-300 text-sm mb-1">
-                  Resend API Key
+                  App Password
                 </label>
                 <input
-                  type="text"
-                  value={resendApiKey}
-                  onChange={(e) => setResendApiKey(e.target.value)}
+                  type="password"
+                  value={appPassword}
+                  onChange={(e) => setAppPassword(e.target.value)}
                   className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600"
                   required
                   placeholder={isEditing ? "Leave blank to keep current password" : ""}
                 />
-                {isEditing && (
+                {isEditing ? (
                   <p className="text-xs text-gray-400 mt-1">
                     Leave blank to keep the current password
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Generate an app password in your Google Account settings under "2-Step Verification"
                   </p>
                 )}
               </div>

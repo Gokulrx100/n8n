@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 
 interface TopNavProps {
   activeTab: "workflows" | "credentials";
-  setActiveTab: (tab: "workflows" | "credentials") => void;
+  setActiveTab?: (tab: "workflows" | "credentials") => void;
 }
 
 export default function TopNav({ activeTab, setActiveTab }: TopNavProps) {
@@ -27,7 +27,7 @@ export default function TopNav({ activeTab, setActiveTab }: TopNavProps) {
 
         <nav className="flex items-center gap-10">
           <button
-            onClick={() => setActiveTab("workflows")}
+            onClick={() => setActiveTab?.("workflows")}
             className={`${base} ${
               activeTab === "workflows" ? active : inactive
             }`}
@@ -36,7 +36,7 @@ export default function TopNav({ activeTab, setActiveTab }: TopNavProps) {
           </button>
 
           <button
-            onClick={() => setActiveTab("credentials")}
+            onClick={() => setActiveTab?.("credentials")}
             className={`${base} ${
               activeTab === "credentials" ? active : inactive
             }`}

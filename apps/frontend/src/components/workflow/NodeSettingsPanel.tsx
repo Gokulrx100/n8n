@@ -34,45 +34,40 @@ export default function NodeSettingsPanel({
     )
   );
 
-  const getNodeData = (key: string) => {
-    return (selectedNode?.data as any)?.[key];
-  };
-
   const renderNodeContent = () => {
-    const commonFields = (
-      <div>
-        <label className="block text-xs font-medium text-gray-300 mb-2">
-          Label
-        </label>
-        <input
-          className={INPUT_CLASS}
-          //@ts-ignore
-          value={selectedNode.data.label ?? ""}
-          onChange={(e) =>
-            onUpdateNode(selectedNode.id, { label: e.target.value })
-          }
-        />
-      </div>
-    );
 
     switch (selectedNode.type) {
       case "manualTrigger":
         return (
           <>
-            {commonFields}
             <div>
               <label className="block text-xs font-medium text-gray-300 mb-2">
-                Payload (JSON or text)
+                Label
+              </label>
+              <input
+                className={INPUT_CLASS}
+                value={(selectedNode.data as any)?.label ?? ""}
+                onChange={(e) =>
+                  onUpdateNode(selectedNode.id, { label: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-300 mb-2">
+                Payload (JSON format)
               </label>
               <textarea
                 className={INPUT_CLASS}
                 rows={4}
-                //@ts-ignore
-                value={selectedNode.data.payload ?? ""}
+                value={(selectedNode.data as any)?.payload ?? ""}
                 onChange={(e) =>
                   onUpdateNode(selectedNode.id, { payload: e.target.value })
                 }
+                placeholder='{"email": "test@example.com", "subject": "Test Subject", "message": "Hello World", "chatId": "123456789"}'
               />
+              <p className="text-xs text-gray-400 mt-1">
+                Use: email, subject, message for email nodes. Use: chatId, message for telegram nodes.
+              </p>
             </div>
           </>
         );
@@ -80,15 +75,25 @@ export default function NodeSettingsPanel({
       case "webhookTrigger":
         return (
           <>
-            {commonFields}
+            <div>
+              <label className="block text-xs font-medium text-gray-300 mb-2">
+                Label
+              </label>
+              <input
+                className={INPUT_CLASS}
+                value={(selectedNode.data as any)?.label ?? ""}
+                onChange={(e) =>
+                  onUpdateNode(selectedNode.id, { label: e.target.value })
+                }
+              />
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-300 mb-2">
                 HTTP Method
               </label>
               <select
                 className={INPUT_CLASS}
-                //@ts-ignore
-                value={selectedNode.data.method ?? "POST"}
+                value={(selectedNode.data as any)?.method ?? "POST"}
                 onChange={(e) =>
                   onUpdateNode(selectedNode.id, { method: e.target.value })
                 }
@@ -105,8 +110,7 @@ export default function NodeSettingsPanel({
               </label>
               <input
                 className={INPUT_CLASS}
-                //@ts-ignore
-                value={selectedNode.data.path ?? ""}
+                value={(selectedNode.data as any)?.path ?? ""}
                 onChange={(e) =>
                   onUpdateNode(selectedNode.id, { path: e.target.value })
                 }
@@ -121,8 +125,7 @@ export default function NodeSettingsPanel({
               </label>
               <input
                 className={INPUT_CLASS}
-                //@ts-ignore
-                value={selectedNode.data.secret ?? ""}
+                value={(selectedNode.data as any)?.secret ?? ""}
                 onChange={(e) =>
                   onUpdateNode(selectedNode.id, { secret: e.target.value })
                 }
@@ -134,15 +137,25 @@ export default function NodeSettingsPanel({
       case "telegramAction":
         return (
           <>
-            {commonFields}
+            <div>
+              <label className="block text-xs font-medium text-gray-300 mb-2">
+                Label
+              </label>
+              <input
+                className={INPUT_CLASS}
+                value={(selectedNode.data as any)?.label ?? ""}
+                onChange={(e) =>
+                  onUpdateNode(selectedNode.id, { label: e.target.value })
+                }
+              />
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-300 mb-2">
                 Credential
               </label>
               <select
                 className={INPUT_CLASS}
-                //@ts-ignore
-                value={selectedNode.data.credentialId ?? ""}
+                value={(selectedNode.data as any)?.credentialId ?? ""}
                 onChange={(e) => {
                   const val = e.target.value;
                   const cred = credentials.find(
@@ -165,29 +178,29 @@ export default function NodeSettingsPanel({
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-300 mb-2">
-                Chat ID (optional)
+                Chat ID (uses trigger.chatId if empty)
               </label>
               <input
                 className={INPUT_CLASS}
-                //@ts-ignore
-                value={selectedNode.data.chatId ?? ""}
+                value={(selectedNode.data as any)?.chatId ?? ""}
                 onChange={(e) =>
                   onUpdateNode(selectedNode.id, { chatId: e.target.value })
                 }
+                placeholder="Leave empty to use trigger.chatId"
               />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-300 mb-2">
-                Message
+                Message (uses trigger.message if empty)
               </label>
               <textarea
                 className={INPUT_CLASS}
                 rows={3}
-                //@ts-ignore
-                value={selectedNode.data.message ?? ""}
+                value={(selectedNode.data as any)?.message ?? ""}
                 onChange={(e) =>
                   onUpdateNode(selectedNode.id, { message: e.target.value })
                 }
+                placeholder="Leave empty to use trigger.message"
               />
             </div>
           </>
@@ -196,15 +209,25 @@ export default function NodeSettingsPanel({
       case "emailAction":
         return (
           <>
-            {commonFields}
+            <div>
+              <label className="block text-xs font-medium text-gray-300 mb-2">
+                Label
+              </label>
+              <input
+                className={INPUT_CLASS}
+                value={(selectedNode.data as any)?.label ?? ""}
+                onChange={(e) =>
+                  onUpdateNode(selectedNode.id, { label: e.target.value })
+                }
+              />
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-300 mb-2">
                 Credential
               </label>
               <select
                 className={INPUT_CLASS}
-                //@ts-ignore
-                value={selectedNode.data.credentialId ?? ""}
+                value={(selectedNode.data as any)?.credentialId ?? ""}
                 onChange={(e) => {
                   const val = e.target.value;
                   const cred = credentials.find(
@@ -227,42 +250,42 @@ export default function NodeSettingsPanel({
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-300 mb-2">
-                To (optional, taken from trigger if empty)
+                To (optional, uses trigger.email if empty)
               </label>
               <input
                 className={INPUT_CLASS}
-                //@ts-ignore
-                value={selectedNode.data.to ?? ""}
+                value={(selectedNode.data as any)?.to ?? ""}
                 onChange={(e) =>
                   onUpdateNode(selectedNode.id, { to: e.target.value })
                 }
+                placeholder="Leave empty to use trigger.email"
               />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-300 mb-2">
-                Subject
+                Subject (uses trigger.subject if empty)
               </label>
               <input
                 className={INPUT_CLASS}
-                //@ts-ignore
-                value={selectedNode.data.subject ?? ""}
+                value={(selectedNode.data as any)?.subject ?? ""}
                 onChange={(e) =>
                   onUpdateNode(selectedNode.id, { subject: e.target.value })
                 }
+                placeholder="Leave empty to use trigger.subject"
               />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-300 mb-2">
-                Body
+                Body (uses trigger.message if empty)
               </label>
               <textarea
                 className={INPUT_CLASS}
                 rows={3}
-                //@ts-ignore
-                value={selectedNode.data.body ?? ""}
+                value={(selectedNode.data as any)?.body ?? ""}
                 onChange={(e) =>
                   onUpdateNode(selectedNode.id, { body: e.target.value })
                 }
+                placeholder="Leave empty to use trigger.message"
               />
             </div>
           </>
@@ -271,7 +294,18 @@ export default function NodeSettingsPanel({
       case "aiAgent":
         return (
           <>
-            {commonFields}
+            <div>
+              <label className="block text-xs font-medium text-gray-300 mb-2">
+                Label
+              </label>
+              <input
+                className={INPUT_CLASS}
+                value={(selectedNode.data as any)?.label ?? ""}
+                onChange={(e) =>
+                  onUpdateNode(selectedNode.id, { label: e.target.value })
+                }
+              />
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-300 mb-2">
                 System Prompt
@@ -279,8 +313,7 @@ export default function NodeSettingsPanel({
               <textarea
                 className={INPUT_CLASS}
                 rows={3}
-                //@ts-ignore
-                value={selectedNode.data.systemPrompt ?? ""}
+                value={(selectedNode.data as any)?.systemPrompt ?? ""}
                 onChange={(e) =>
                   onUpdateNode(selectedNode.id, {
                     systemPrompt: e.target.value,
@@ -300,8 +333,7 @@ export default function NodeSettingsPanel({
                   max="2"
                   step="0.1"
                   className={INPUT_CLASS}
-                  //@ts-ignore
-                  value={selectedNode.data.temperature ?? 0.7}
+                  value={(selectedNode.data as any)?.temperature ?? 0.7}
                   onChange={(e) =>
                     onUpdateNode(selectedNode.id, {
                       temperature: parseFloat(e.target.value),
@@ -318,8 +350,7 @@ export default function NodeSettingsPanel({
                   min="1"
                   max="4000"
                   className={INPUT_CLASS}
-                  //@ts-ignore
-                  value={selectedNode.data.maxTokens ?? 1000}
+                  value={(selectedNode.data as any)?.maxTokens ?? 1000}
                   onChange={(e) =>
                     onUpdateNode(selectedNode.id, {
                       maxTokens: parseInt(e.target.value),
@@ -334,7 +365,18 @@ export default function NodeSettingsPanel({
       case "geminiModel":
         return (
           <>
-            {commonFields}
+            <div>
+              <label className="block text-xs font-medium text-gray-300 mb-2">
+                Label
+              </label>
+              <input
+                className={INPUT_CLASS}
+                value={(selectedNode.data as any)?.label ?? ""}
+                onChange={(e) =>
+                  onUpdateNode(selectedNode.id, { label: e.target.value })
+                }
+              />
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-300 mb-2">
                 API Key
@@ -342,8 +384,7 @@ export default function NodeSettingsPanel({
               <input
                 type="password"
                 className={INPUT_CLASS}
-                //@ts-ignore
-                value={selectedNode.data.apiKey ?? ""}
+                value={(selectedNode.data as any)?.apiKey ?? ""}
                 onChange={(e) =>
                   onUpdateNode(selectedNode.id, { apiKey: e.target.value })
                 }
@@ -356,8 +397,7 @@ export default function NodeSettingsPanel({
               </label>
               <select
                 className={INPUT_CLASS}
-                //@ts-ignore
-                value={selectedNode.data.model ?? "gemini-pro"}
+                value={(selectedNode.data as any)?.model ?? "gemini-pro"}
                 onChange={(e) =>
                   onUpdateNode(selectedNode.id, { model: e.target.value })
                 }
@@ -372,15 +412,25 @@ export default function NodeSettingsPanel({
       case "redisMemory":
         return (
           <>
-            {commonFields}
+            <div>
+              <label className="block text-xs font-medium text-gray-300 mb-2">
+                Label
+              </label>
+              <input
+                className={INPUT_CLASS}
+                value={(selectedNode.data as any)?.label ?? ""}
+                onChange={(e) =>
+                  onUpdateNode(selectedNode.id, { label: e.target.value })
+                }
+              />
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-300 mb-2">
                 Session ID
               </label>
               <input
                 className={INPUT_CLASS}
-                //@ts-ignore
-                value={selectedNode.data.sessionId ?? ""}
+                value={(selectedNode.data as any)?.sessionId ?? ""}
                 onChange={(e) =>
                   onUpdateNode(selectedNode.id, { sessionId: e.target.value })
                 }
@@ -397,8 +447,7 @@ export default function NodeSettingsPanel({
                   min="1"
                   max="100"
                   className={INPUT_CLASS}
-                  //@ts-ignore
-                  value={selectedNode.data.maxHistory ?? 10}
+                  value={(selectedNode.data as any)?.maxHistory ?? 10}
                   onChange={(e) =>
                     onUpdateNode(selectedNode.id, {
                       maxHistory: parseInt(e.target.value),
@@ -415,8 +464,7 @@ export default function NodeSettingsPanel({
                   min="60"
                   max="86400"
                   className={INPUT_CLASS}
-                  //@ts-ignore
-                  value={selectedNode.data.ttl ?? 3600}
+                  value={(selectedNode.data as any)?.ttl ?? 3600}
                   onChange={(e) =>
                     onUpdateNode(selectedNode.id, {
                       ttl: parseInt(e.target.value),
@@ -431,15 +479,25 @@ export default function NodeSettingsPanel({
       case "httpTool":
         return (
           <>
-            {commonFields}
+            <div>
+              <label className="block text-xs font-medium text-gray-300 mb-2">
+                Label
+              </label>
+              <input
+                className={INPUT_CLASS}
+                value={(selectedNode.data as any)?.label ?? ""}
+                onChange={(e) =>
+                  onUpdateNode(selectedNode.id, { label: e.target.value })
+                }
+              />
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-300 mb-2">
                 URL
               </label>
               <input
                 className={INPUT_CLASS}
-                //@ts-ignore
-                value={selectedNode.data.url ?? ""}
+                value={(selectedNode.data as any)?.url ?? ""}
                 onChange={(e) =>
                   onUpdateNode(selectedNode.id, { url: e.target.value })
                 }
@@ -452,8 +510,7 @@ export default function NodeSettingsPanel({
               </label>
               <select
                 className={INPUT_CLASS}
-                //@ts-ignore
-                value={selectedNode.data.method ?? "GET"}
+                value={(selectedNode.data as any)?.method ?? "GET"}
                 onChange={(e) =>
                   onUpdateNode(selectedNode.id, { method: e.target.value })
                 }
@@ -470,15 +527,25 @@ export default function NodeSettingsPanel({
       case "codeTool":
         return (
           <>
-            {commonFields}
+            <div>
+              <label className="block text-xs font-medium text-gray-300 mb-2">
+                Label
+              </label>
+              <input
+                className={INPUT_CLASS}
+                value={(selectedNode.data as any)?.label ?? ""}
+                onChange={(e) =>
+                  onUpdateNode(selectedNode.id, { label: e.target.value })
+                }
+              />
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-300 mb-2">
                 Language
               </label>
               <select
                 className={INPUT_CLASS}
-                //@ts-ignore
-                value={selectedNode.data.language ?? "javascript"}
+                value={(selectedNode.data as any)?.language ?? "javascript"}
                 onChange={(e) =>
                   onUpdateNode(selectedNode.id, { language: e.target.value })
                 }
@@ -494,8 +561,7 @@ export default function NodeSettingsPanel({
               <textarea
                 className={INPUT_CLASS}
                 rows={6}
-                //@ts-ignore
-                value={selectedNode.data.code ?? ""}
+                value={(selectedNode.data as any)?.code ?? ""}
                 onChange={(e) =>
                   onUpdateNode(selectedNode.id, { code: e.target.value })
                 }
@@ -508,14 +574,25 @@ export default function NodeSettingsPanel({
       case "workflowTool":
         return (
           <>
-            {commonFields}
+            <div>
+              <label className="block text-xs font-medium text-gray-300 mb-2">
+                Label
+              </label>
+              <input
+                className={INPUT_CLASS}
+                value={(selectedNode.data as any)?.label ?? ""}
+                onChange={(e) =>
+                  onUpdateNode(selectedNode.id, { label: e.target.value })
+                }
+              />
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-300 mb-2">
                 Target Workflow
               </label>
               <select
                 className={INPUT_CLASS}
-                value={getNodeData("workflowId") || ""}
+                value={(selectedNode.data as any)?.workflowId || ""}
                 onChange={(e) => {
                   const selectedWorkflow = workflows.find(
                     (w) => w._id === e.target.value
@@ -534,10 +611,10 @@ export default function NodeSettingsPanel({
                   </option>
                 ))}
               </select>
-              {getNodeData("workflowId") && (
+              {(selectedNode.data as any)?.workflowId && (
                 <div className="mt-1 text-xs text-gray-400">
                   Selected:{" "}
-                  {String(getNodeData("workflowTitle") || "Unknown Workflow")}
+                  {String((selectedNode.data as any)?.workflowTitle || "Unknown Workflow")}
                 </div>
               )}
             </div>
@@ -549,8 +626,8 @@ export default function NodeSettingsPanel({
                 className={INPUT_CLASS}
                 rows={3}
                 value={
-                  getNodeData("inputData")
-                    ? JSON.stringify(getNodeData("inputData"), null, 2)
+                  (selectedNode.data as any)?.inputData
+                    ? JSON.stringify((selectedNode.data as any)?.inputData, null, 2)
                     : "{}"
                 }
                 onChange={(e) => {
@@ -570,7 +647,20 @@ export default function NodeSettingsPanel({
         );
 
       default:
-        return commonFields;
+        return (
+          <div>
+            <label className="block text-xs font-medium text-gray-300 mb-2">
+              Label
+            </label>
+            <input
+              className={INPUT_CLASS}
+              value={(selectedNode.data as any)?.label ?? ""}
+              onChange={(e) =>
+                onUpdateNode(selectedNode.id, { label: e.target.value })
+              }
+            />
+          </div>
+        );
     }
   };
 
