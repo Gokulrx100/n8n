@@ -172,14 +172,14 @@ async function executeEmailAction(node: any, context: any) {
     throw new Error("Email credential missing email or app password");
   }
 
-  const recipient = to || context.triggerData?.email;
+  const recipient = to || context.triggerData?.email || context.triggerData?.body?.email;
     
   if (!recipient) {
     throw new Error("No recipient email specified. Please provide 'to' field in email node or include 'email' in trigger payload");
   }
 
-  const finalSubject = subject || context.triggerData?.subject;
-  const finalBody = body || context.triggerData?.message;
+  const finalSubject = subject || context.triggerData?.subject || context.triggerData?.body?.subject;
+  const finalBody = body || context.triggerData?.message || context.triggerData?.body?.message;
   
   const processedSubject = processTemplate(finalSubject, context);
   const processedBody = processTemplate(finalBody, context);
@@ -236,13 +236,13 @@ async function executeTelegramAction(node: any, context: any) {
     throw new Error("Bot token not configured in credential");
   }
 
-  const targetChatId = chatId || context.triggerData?.chatId;
+  const targetChatId = chatId || context.triggerData?.chatId || context.triggerData?.body?.chatId;
     
   if (!targetChatId) {
     throw new Error("No chat ID specified. Please provide 'chatId' field in telegram node or include 'chatId' in trigger payload");
   }
 
-  const finalMessage = message || context.triggerData?.message;
+  const finalMessage = message || context.triggerData?.message || context.triggerData?.body?.message;
   const processedMessage = processTemplate(finalMessage, context);
 
   const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
@@ -294,7 +294,6 @@ function processTemplate(template: string, context: any): string {
     if (nodeId && field && context.nodeOutputs?.[nodeId]) {
       return context.nodeOutputs[nodeId]?.[field]?.toString() || match;
     }
-    
     return match;
   });
 }

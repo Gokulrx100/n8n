@@ -170,7 +170,7 @@ const CredentialModel = memo(({
                   App Password
                 </label>
                 <input
-                  type="password"
+                  type="text"
                   value={appPassword}
                   onChange={(e) => setAppPassword(e.target.value)}
                   className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600"
@@ -196,7 +196,7 @@ const CredentialModel = memo(({
                 Telegram Bot Token
               </label>
               <input
-                type="password"
+                type="text"
                 value={botToken}
                 onChange={(e) => setBotToken(e.target.value)}
                 className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600"

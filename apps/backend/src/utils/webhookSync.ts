@@ -18,6 +18,13 @@ export async function syncWebhooksForWorkflow(
   for (const node of webhookNodes) {
     const data = node.data || {};
     const existingWebhookId = data.webhookId;
+    
+    // Skip if no path provided
+    if (!data.path) {
+      console.warn(`Skipping webhook node ${node.id} - no path provided`);
+      continue;
+    }
+    
     const webhookData = {
       title: data.title || `Webhook for node ${node.id}`,
       workflowId,
@@ -43,7 +50,21 @@ export async function syncWebhooksForWorkflow(
         webhook = await WebhookModel.create(webhookData);
       }
     } else {
-      webhook = await WebhookModel.create(webhookData);
+      const existingWebhook = await WebhookModel.findOne({
+        path: data.path,
+        workflowId: workflowId
+      });
+      
+      if (existingWebhook) {
+        const updatedWebhook = await WebhookModel.findByIdAndUpdate(
+          existingWebhook._id,
+          webhookData,
+          { new: true }
+        );
+        webhook = updatedWebhook || existingWebhook;
+      } else {
+        webhook = await WebhookModel.create(webhookData);
+      }
     }
 
     referencedWebhookIds.push(webhook._id.toString());

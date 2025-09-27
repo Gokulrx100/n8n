@@ -7,7 +7,6 @@ import connectDB from "./utils/connectDB";
 import authRoutes from "./routes/authRoutes";
 import workflowRoutes from "./routes/workflowRoutes";
 import credentialRoutes from "./routes/credentialRoutes";
-import webhookRoutes from "./routes/webhookRoutes";
 import executionRoutes from "./routes/executionRoutes";
 
 const app = express();
@@ -21,7 +20,6 @@ connectDB();
 app.use("/auth", authRoutes);
 app.use("/workflow", workflowRoutes);
 app.use("/credentials", credentialRoutes);
-app.use("/api/webhook", webhookRoutes);
 app.use("/execute", executionRoutes);
 
 app.listen(PORT);
