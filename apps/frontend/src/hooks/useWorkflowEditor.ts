@@ -15,7 +15,7 @@ const NODE_CONFIGS: Record<string, NodeConfig> = {
   webhookTrigger: {
     label: "Webhook",
     method: "POST",
-    path: `wh_${Date.now().toString(36)}`,
+    path: "", // Will be generated dynamically
     header: "",
     secret: "",
   },
@@ -221,18 +221,20 @@ const addNode = useCallback((nodeType: string) => {
   const position = getNextNodePosition();
   const defaultData = NODE_CONFIGS[nodeType as keyof typeof NODE_CONFIGS];
   
-  if (nodeType === 'webhookTrigger' && defaultData && 'path' in defaultData && !defaultData.path) {
-    defaultData.path = `wh_${Date.now().toString(36)}`;
+  const nodeData = defaultData ? JSON.parse(JSON.stringify(defaultData)) : { label: nodeType };
+  
+  if (nodeType === 'webhookTrigger' && nodeData && 'path' in nodeData) {
+    nodeData.path = `wh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
-  if (nodeType === 'redisMemory' && defaultData && 'sessionId' in defaultData) {
-    defaultData.sessionId = `session_${Date.now()}`;
+  if (nodeType === 'redisMemory' && nodeData && 'sessionId' in nodeData) {
+    nodeData.sessionId = `session_${Date.now()}`;
   }
   
   const newNode = {
     id: `${nodeType}-${Date.now()}`,
     type: nodeType,
     position,
-    data: defaultData || { label: nodeType },
+    data: nodeData,
   };
   
   setNodes((nds) => [...nds, newNode]);

@@ -18,35 +18,36 @@ export async function syncWebhooksForWorkflow(
   for (const node of webhookNodes) {
     const data = node.data || {};
     const existingWebhookId = data.webhookId;
-    const method = (data.method || "POST").toUpperCase();
-    let path = data.path || `wh_${uuidv4()}`;
-
-    if (existingWebhookId) {
-      const w: IWebhook | null = await WebhookModel.findById(existingWebhookId);
-      if (w && w.workflowId.toString() === workflowId.toString()) {
-        w.method = method;
-        w.path = path;
-        w.header = data.header || w.header;
-        w.secret = data.secret || w.secret;
-        await w.save();
-        referencedWebhookIds.push(w._id.toString());
-        node.data = { ...node.data, webhookId: w._id.toString(), path };
-        continue;
-      }
-    }
-
-    const created: IWebhook = await WebhookModel.create({
+    const webhookData = {
       title: data.title || `Webhook for node ${node.id}`,
       workflowId,
       nodeId: node.id,
-      method,
-      path,
+      method: (data.method || "POST").toUpperCase(),
+      path: data.path,
       header: data.header || {},
       secret: data.secret || undefined,
-    });
+    };
 
-    referencedWebhookIds.push(created._id.toString());
-    node.data = { ...node.data, webhookId: created._id.toString(), path };
+    let webhook: IWebhook;
+
+    if (existingWebhookId) {
+      const existingWebhook = await WebhookModel.findByIdAndUpdate(
+        existingWebhookId,
+        webhookData,
+        { new: true }
+      );
+      
+      if (existingWebhook && existingWebhook.workflowId.toString() === workflowId.toString()) {
+        webhook = existingWebhook;
+      } else {
+        webhook = await WebhookModel.create(webhookData);
+      }
+    } else {
+      webhook = await WebhookModel.create(webhookData);
+    }
+
+    referencedWebhookIds.push(webhook._id.toString());
+    node.data = { ...node.data, webhookId: webhook._id.toString(), path: webhook.path };
   }
 
   await WebhookModel.deleteMany({

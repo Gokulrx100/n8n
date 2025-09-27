@@ -73,6 +73,17 @@ export default function NodeSettingsPanel({
         );
 
       case "webhookTrigger":
+        const webhookPath = (selectedNode.data as any)?.path || "";
+        const webhookUrl = webhookPath 
+          ? `${import.meta.env.VITE_BASE_API}/execute/webhook/${webhookPath}`
+          : "";
+
+        const copyUrl = () => {
+          if (webhookUrl) {
+            navigator.clipboard.writeText(webhookUrl);
+          }
+        };
+
         return (
           <>
             <div>
@@ -110,15 +121,35 @@ export default function NodeSettingsPanel({
               </label>
               <input
                 className={INPUT_CLASS}
-                value={(selectedNode.data as any)?.path ?? ""}
+                value={webhookPath}
                 onChange={(e) =>
                   onUpdateNode(selectedNode.id, { path: e.target.value })
                 }
+                placeholder="Enter webhook path"
               />
-              <p className="text-xs text-gray-400 mt-1">
-                If empty, a unique path will be generated.
-              </p>
             </div>
+            {webhookUrl && (
+              <div>
+                <label className="block text-xs font-medium text-gray-300 mb-2">
+                  Webhook URL
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    className={INPUT_CLASS}
+                    value={webhookUrl}
+                    readOnly
+                    placeholder="Webhook URL will appear here"
+                  />
+                  <button
+                    onClick={copyUrl}
+                    className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white text-xs rounded-lg transition-colors whitespace-nowrap"
+                    title="Copy URL"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            )}
             <div>
               <label className="block text-xs font-medium text-gray-300 mb-2">
                 Secret (optional)
@@ -129,6 +160,7 @@ export default function NodeSettingsPanel({
                 onChange={(e) =>
                   onUpdateNode(selectedNode.id, { secret: e.target.value })
                 }
+                placeholder="Optional webhook secret"
               />
             </div>
           </>

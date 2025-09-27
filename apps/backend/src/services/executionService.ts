@@ -24,7 +24,6 @@ export async function executeWorkflow(workflowId: Types.ObjectId, triggerData: a
     throw new Error("Workflow not found or disabled");
   }
 
-  // Find trigger node (starting point)
   const triggerNode = workflow.nodes.find(node => 
     node.type === 'manualTrigger' || node.type === 'webhookTrigger'
   );
@@ -41,7 +40,6 @@ export async function executeWorkflow(workflowId: Types.ObjectId, triggerData: a
   };
 
   try {
-    // Execute nodes starting from trigger, following connections
     await executeNodeSequence(triggerNode, workflow, context, results);
 
     return {
@@ -75,12 +73,10 @@ async function executeNodeSequence(
   let nodeToExecute = currentNode;
 
   while (nodeToExecute) {
-    // Avoid infinite loops
     if (executed.has(nodeToExecute.id)) {
       break;
     }
 
-    // Execute current node
     const nodeResult = await executeNode(nodeToExecute, context);
     
     results.push({
@@ -91,30 +87,23 @@ async function executeNodeSequence(
       error: nodeResult.error
     });
 
-    // Store output for template variables
     context.nodeOutputs[nodeToExecute.id] = nodeResult.data;
     executed.add(nodeToExecute.id);
 
-    // If execution failed, stop the workflow
     if (!nodeResult.success) {
       break;
     }
 
-    // Find next connected node
     nodeToExecute = getNextNode(nodeToExecute.id, workflow);
   }
 }
 
 function getNextNode(currentNodeId: string, workflow: IWorkFlow) {
   const connections = workflow.connections || [];
-  
-  // Find the first connection from current node
   const nextConnection = connections.find((conn: any) => conn.source === currentNodeId);
   if (!nextConnection) {
-    return null; // End of workflow
+    return null; 
   }
-
-  // Find the target node
   return workflow.nodes.find(node => node.id === nextConnection.target) || null;
 }
 
