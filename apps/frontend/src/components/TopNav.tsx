@@ -25,7 +25,7 @@ export default function TopNav({ activeTab, setActiveTab }: TopNavProps) {
           <span className="text-sm text-gray-400">clone</span>
         </div>
 
-        <nav className="flex items-center gap-10">
+        <nav className="flex items-center gap-25">
           <button
             onClick={() => setActiveTab?.("workflows")}
             className={`${base} ${

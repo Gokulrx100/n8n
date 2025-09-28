@@ -19,7 +19,6 @@ export async function syncWebhooksForWorkflow(
     const data = node.data || {};
     const existingWebhookId = data.webhookId;
     
-    // Skip if no path provided
     if (!data.path) {
       console.warn(`Skipping webhook node ${node.id} - no path provided`);
       continue;

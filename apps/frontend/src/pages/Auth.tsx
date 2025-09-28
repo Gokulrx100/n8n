@@ -30,14 +30,12 @@ export default function Auth() {
       setBusy(true);
       
       if (isSignUp) {
-        // Sign up flow: create account then sign in
         await axios.post(`${BASE}/auth/signup`, { email, password });
         const signinRes = await axios.post(`${BASE}/auth/signin`, { email, password });
         const token = signinRes.data?.token;
         if (!token) throw new Error(signinRes.data?.message || "No token returned after signup");
         localStorage.setItem("token", token);
       } else {
-        // Sign in flow: just authenticate
         const res = await axios.post(`${BASE}/auth/signin`, { email, password });
         const token = res.data?.token;
         if (!token) throw new Error(res.data?.message || "No token returned from server");

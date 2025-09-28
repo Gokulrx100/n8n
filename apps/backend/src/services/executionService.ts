@@ -70,45 +70,58 @@ async function executeNodeSequence(
   results: NodeExecutionResult[]
 ) {
   const executed = new Set<string>();
-  let nodeToExecute = currentNode;
+  const queue = [currentNode];
 
-  while (nodeToExecute) {
-    if (executed.has(nodeToExecute.id)) {
-      break;
-    }
+  while (queue.length > 0) {
+    const currentBatch = [...queue];
+    queue.length = 0; 
+    const batchPromises = currentBatch.map(async (nodeToExecute) => {
+      if (executed.has(nodeToExecute.id)) {
+        return;
+      }
 
-    const nodeResult = await executeNode(nodeToExecute, context);
-    
-    results.push({
-      nodeId: nodeToExecute.id,
-      nodeType: nodeToExecute.type,
-      success: nodeResult.success,
-      data: nodeResult.data,
-      error: nodeResult.error
+      const nodeResult = await executeNode(nodeToExecute, context);
+      
+      results.push({
+        nodeId: nodeToExecute.id,
+        nodeType: nodeToExecute.type,
+        success: nodeResult.success,
+        data: nodeResult.data,
+        error: nodeResult.error
+      });
+
+      context.nodeOutputs[nodeToExecute.id] = nodeResult.data;
+      executed.add(nodeToExecute.id);
+
+      if (nodeResult.success) {
+        const connectedNodes = getConnectedNodes(nodeToExecute.id, workflow);
+        connectedNodes.forEach((node: any) => {
+          if (!executed.has(node.id) && !queue.some((q: any) => q.id === node.id)) {
+            queue.push(node);
+          }
+        });
+      }
     });
 
-    context.nodeOutputs[nodeToExecute.id] = nodeResult.data;
-    executed.add(nodeToExecute.id);
-
-    if (!nodeResult.success) {
-      break;
-    }
-
-    nodeToExecute = getNextNode(nodeToExecute.id, workflow);
+    await Promise.all(batchPromises);
   }
 }
 
-function getNextNode(currentNodeId: string, workflow: IWorkFlow) {
+function getConnectedNodes(currentNodeId: string, workflow: IWorkFlow) {
   const connections = workflow.connections || [];
-  const nextConnection = connections.find((conn: any) => conn.source === currentNodeId);
-  if (!nextConnection) {
-    return null; 
-  }
-  return workflow.nodes.find(node => node.id === nextConnection.target) || null;
+  const connectedConnections = connections.filter((conn: any) => conn.source === currentNodeId);
+  
+  return connectedConnections
+    .map((conn: any) => {
+      return workflow.nodes.find((node: any) => node.id === conn.target);
+    })
+    .filter((node: any) => {
+      return node !== undefined;
+    });
 }
 
 async function executeNode(node: any, context: any): Promise<{ success: boolean; data: any; error?: string }> {
-  console.log(`Executing: ${node.id} (${node.type})`);
+  console.log(`Executing: ${node.type} (${node.id})`);
   
   try {
     switch (node.type) {
