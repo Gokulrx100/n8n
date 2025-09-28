@@ -1,4 +1,5 @@
 import { useCallback, useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useNodesState, useEdgesState, useReactFlow, addEdge, type Node, type Edge } from "@xyflow/react";
 import axios from "axios";
@@ -15,7 +16,7 @@ const NODE_CONFIGS: Record<string, NodeConfig> = {
   webhookTrigger: {
     label: "Webhook",
     method: "POST",
-    path: "", // Will be generated dynamically
+    path: "",
     header: "",
     secret: "",
   },
@@ -147,7 +148,7 @@ export function useWorkflowEditor(id?: string) {
     async (workflowTitle?: string) => {
       const finalTitle = workflowTitle || title;
       if (!finalTitle.trim()) {
-        alert("Please enter a workflow title.");
+        toast.error("Please enter a workflow title.");
         return;
       }
       setSaving(true);
@@ -165,8 +166,9 @@ export function useWorkflowEditor(id?: string) {
           if (newId) navigate(`/create/workflow/${newId}`, { replace: true });
         }
         setTitle(finalTitle);
+        toast.success("Workflow saved");
       } catch (err) {
-        alert("Failed to save workflow");
+        toast.error("Failed to save workflow");
       } finally {
         setSaving(false);
       }
@@ -269,8 +271,9 @@ const toggleEnabled = useCallback(async () => {
       headers: authHeaders(),
     });
     setEnabled(newEnabled);
+    toast.success(`Workflow ${newEnabled ? 'enabled' : 'disabled'}`);
   } catch (err) {
-    alert("Failed to update workflow enabled status");
+    toast.error("Failed to update workflow enabled status");
   }
 }, [id, enabled, authHeaders]);
 

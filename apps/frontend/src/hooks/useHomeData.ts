@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import axios from "axios";
 
 const BASE = import.meta.env.VITE_BASE_API!;
@@ -73,7 +74,7 @@ export function useHomeData() {
       });
       setWorkflows(prev => prev.filter((wf) => wf._id !== workflowId));
     } catch {
-      alert("Failed to delete workflow");
+      toast.error("Failed to delete workflow");
     }
   }, [authHeaders]);
 
@@ -85,7 +86,7 @@ export function useHomeData() {
       });
       setCredentials(prev => prev.filter((cred) => cred._id !== credentialId));
     } catch {
-      alert("Failed to delete credential");
+      toast.error("Failed to delete credential");
     }
   }, [authHeaders]);
 
@@ -102,7 +103,7 @@ export function useHomeData() {
       setShowCredentialModel(false);
       fetchCredentials();
     } catch (err: any) {
-      alert(err?.response?.data?.message || "Failed to create credential");
+      toast.error(err?.response?.data?.message || "Failed to create credential");
     } finally {
       setCreating(false);
     }
@@ -130,7 +131,7 @@ export function useHomeData() {
       setEditingCredential(null);
       fetchCredentials();
     } catch (err: any) {
-      alert(err?.response?.data?.message || "Failed to update credential");
+      toast.error(err?.response?.data?.message || "Failed to update credential");
     } finally {
       setCreating(false);
     }

@@ -1,4 +1,4 @@
-import { ArrowLeft, Edit2, Check, X, Power } from "lucide-react";
+import { ArrowLeft, Edit2, Check, X, Power, Save } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface WorkflowHeaderProps {
@@ -114,12 +114,13 @@ export default function WorkflowHeader({
         <button
           onClick={onSave}
           disabled={saving || nodesCount === 0}
-          className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+          className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
             saving || nodesCount === 0
               ? "bg-gray-600 text-gray-400 cursor-not-allowed"
               : "bg-blue-600 hover:bg-blue-700 text-white"
           }`}
         >
+          <Save size={16} />
           {saving ? "Saving…" : isEditing ? "Update" : "Save"}
         </button>
       </div>

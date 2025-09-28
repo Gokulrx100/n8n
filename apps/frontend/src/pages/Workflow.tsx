@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import {
   ReactFlow,
   Background,
@@ -70,13 +71,39 @@ function WorkflowEditor() {
     isValidConnection
   } = useWorkflowEditor(id);
 
-  // Execute workflow handler
+
+  // const executeWorkflow = useCallback(async (payload?: any) => {
+  //   if (!id) {
+  //     toast.error("Please save the workflow first before executing");
+  //     return;
+  //   }
+
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     const response = await axios.post(
+  //       `${BASE}/execute/workflow/${id}`,
+  //       { triggerData: payload || {} },
+  //       { headers: { token } }
+  //     );
+      
+  //     const execution = response.data.execution;
+  //     if (execution.success) {
+  //       toast.success("Workflow executed successfully!");
+  //     } else {
+  //       const failedNodes = execution.results.filter((r: any) => !r.success);
+  //       toast.error(` Oops , Errors: ${failedNodes.map((r: any) => r.error).join(', ')}`);
+  //     }
+  //   } catch (error: any) {
+  //     toast.error(error.response?.data?.message || "Execution failed");
+  //   }
+  // }, [id]);
+
   const executeWorkflow = useCallback(async (payload?: any) => {
     if (!id) {
-      alert("Please save the workflow first before executing");
+      toast.error("Please save the workflow first before executing");
       return;
     }
-
+  
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
@@ -85,15 +112,23 @@ function WorkflowEditor() {
         { headers: { token } }
       );
       
+      console.log("Full response:", response.data); // Add this
       const execution = response.data.execution;
+      console.log("Execution object:", execution); // Add this
+      console.log("Execution success:", execution.success); // Add this
+      
       if (execution.success) {
-        alert("Workflow executed successfully!");
+        console.log("Showing success toast"); // Add this
+        toast.success("Workflow executed successfully!");
       } else {
+        console.log("Showing error toast"); // Add this
         const failedNodes = execution.results.filter((r: any) => !r.success);
-        alert(`Workflow execution failed. Errors: ${failedNodes.map((r: any) => r.error).join(', ')}`);
+        console.log("Failed nodes:", failedNodes); // Add this
+        toast.error(`Oops, Errors: ${failedNodes.map((r: any) => r.error).join(', ')}`);
       }
     } catch (error: any) {
-      alert(error.response?.data?.message || "Execution failed");
+      console.log("Catch block triggered:", error); // Add this
+      toast.error(error.response?.data?.message || "Execution failed");
     }
   }, [id]);
 
@@ -104,12 +139,12 @@ function WorkflowEditor() {
     return () => window.removeEventListener('executeWorkflow', handler as EventListener);
   }, [executeWorkflow]);
 
+
   const handleSave = useCallback(() => {
     if (nodes.length === 0) {
-      alert("Cannot save an empty workflow. Please add at least one node.");
+      toast.error("Cannot save an empty workflow. Please add at least one node.");
       return;
     }
-    // Use the current title from the header, or default to "Untitled Workflow"
     const workflowTitle = title || "Untitled Workflow";
     saveWorkflow(workflowTitle);
   }, [title, nodes.length, saveWorkflow]);

@@ -1,4 +1,5 @@
 import { useState, useEffect, memo } from "react";
+import toast from "react-hot-toast";
 
 interface Credential {
   _id: string;
@@ -72,17 +73,17 @@ const CredentialModel = memo(({
     e.preventDefault();
 
     if (!credTitle.trim()) {
-      alert("Please enter a title for the credential");
+      toast.error("Please enter a title for the credential");
       return;
     }
 
     if (credentialPlatform === "telegram" && !botToken.trim()) {
-      alert("Please provide the Telegram Bot Token");
+      toast.error("Please provide the Telegram Bot Token");
       return;
     }
 
     if (credentialPlatform === "email" && (!emailAddr.trim() || !appPassword.trim())) {
-      alert("Please provide both email and app password");
+      toast.error("Please provide both email and app password");
       return;
     }
 

@@ -22,7 +22,6 @@ export default function TopNav({ activeTab, setActiveTab }: TopNavProps) {
       <div className="flex items-center justify-between h-16 px-6">
         <div className="flex items-center gap-4">
           <span className="text-2xl font-bold text-indigo-400">N8N</span>
-          <span className="text-sm text-gray-400">clone</span>
         </div>
 
         <nav className="flex items-center gap-25">
