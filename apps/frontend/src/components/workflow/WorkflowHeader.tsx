@@ -1,23 +1,27 @@
-import { ArrowLeft, Edit2, Check, X } from "lucide-react";
+import { ArrowLeft, Edit2, Check, X, Power } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface WorkflowHeaderProps {
   title: string;
   saving: boolean;
   nodesCount: number;
+  enabled?: boolean;
   onBack: () => void;
   onSave: () => void;
   onUpdateTitle?: (newTitle: string) => void;
+  onToggleEnabled?: () => void;
   isEditing?: boolean;
 }
 
 export default function WorkflowHeader({ 
   title, 
   saving, 
-  nodesCount, 
+  nodesCount,
+  enabled=true,
   onBack, 
   onSave, 
   onUpdateTitle,
+  onToggleEnabled,
   isEditing = false
 }: WorkflowHeaderProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -91,17 +95,34 @@ export default function WorkflowHeader({
         )}
       </div>
 
-      <button
-        onClick={onSave}
-        disabled={saving || nodesCount === 0}
-        className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-          saving || nodesCount === 0
-            ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-            : "bg-blue-600 hover:bg-blue-700 text-white"
-        }`}
-      >
-        {saving ? "Saving…" : isEditing ? "Update" : "Save"}
-      </button>
+      <div className="flex items-center gap-3">
+        {onToggleEnabled && (
+          <button
+            onClick={onToggleEnabled}
+            disabled={saving}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              enabled
+                ? "bg-green-600 hover:bg-green-700 text-white"
+                : "bg-gray-600 hover:bg-gray-500 text-gray-300"
+            } ${saving ? "opacity-50 cursor-not-allowed" : ""}`}
+          >
+            <Power size={16} />
+            {enabled ? "Enabled" : "Disabled"}
+          </button>
+        )}
+        
+        <button
+          onClick={onSave}
+          disabled={saving || nodesCount === 0}
+          className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            saving || nodesCount === 0
+              ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700 text-white"
+          }`}
+        >
+          {saving ? "Saving…" : isEditing ? "Update" : "Save"}
+        </button>
+      </div>
     </div>
   );
 }

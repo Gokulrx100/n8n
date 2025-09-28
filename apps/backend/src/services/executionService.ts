@@ -185,17 +185,17 @@ async function executeEmailAction(node: any, context: any) {
     throw new Error("Email credential missing email or app password");
   }
 
-  const recipient = to || context.triggerData?.email || context.triggerData?.body?.email;
-    
-  if (!recipient) {
-    throw new Error("No recipient email specified. Please provide 'to' field in email node or include 'email' in trigger payload");
-  }
-
-  const finalSubject = subject || context.triggerData?.subject || context.triggerData?.body?.subject;
-  const finalBody = body || context.triggerData?.message || context.triggerData?.body?.message;
+  const RawRecipient = to || context.triggerData?.email || context.triggerData?.body?.email;
+  const RawSubject = subject || context.triggerData?.subject || context.triggerData?.body?.subject;
+  const RawBody = body || context.triggerData?.message || context.triggerData?.body?.message;
   
-  const processedSubject = processTemplate(finalSubject, context);
-  const processedBody = processTemplate(finalBody, context);
+  const processedRecipient = processTemplate(RawRecipient, context);
+  const processedSubject = processTemplate(RawSubject, context);
+  const processedBody = processTemplate(RawBody, context);
+
+  if(!processedRecipient){
+    throw new Error("No recipient defined");
+  }
 
   const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -207,7 +207,7 @@ async function executeEmailAction(node: any, context: any) {
 
   const mailOptions = {
     from: fromEmail,
-    to: recipient,
+    to: processedRecipient,
     subject: processedSubject,
     html: processedBody.replace(/\n/g, '<br>'),
     text: processedBody 
@@ -222,7 +222,7 @@ async function executeEmailAction(node: any, context: any) {
         message: "Email sent successfully",
         messageId: info.messageId,
         from: fromEmail,
-        to: recipient,
+        to: processedRecipient,
         subject: processedSubject,
         sentAt: new Date().toISOString()
       }
@@ -249,20 +249,20 @@ async function executeTelegramAction(node: any, context: any) {
     throw new Error("Bot token not configured in credential");
   }
 
-  const targetChatId = chatId || context.triggerData?.chatId || context.triggerData?.body?.chatId;
-    
-  if (!targetChatId) {
-    throw new Error("No chat ID specified. Please provide 'chatId' field in telegram node or include 'chatId' in trigger payload");
-  }
+  const RawChatId = chatId || context.triggerData?.chatId || context.triggerData?.body?.chatId;
+  const RawMessage = message || context.triggerData?.message || context.triggerData?.body?.message;
+  const processedChatId = processTemplate(RawChatId, context);
+  const processedMessage = processTemplate(RawMessage, context);
 
-  const finalMessage = message || context.triggerData?.message || context.triggerData?.body?.message;
-  const processedMessage = processTemplate(finalMessage, context);
+  if (!processedChatId) {
+    throw new Error("No chat ID specified");
+  }
 
   const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
   
   try {
     const response = await axios.post(telegramApiUrl, {
-      chat_id: targetChatId,
+      chat_id: processedChatId,
       text: processedMessage,
       parse_mode: 'HTML' 
     });
@@ -278,7 +278,7 @@ async function executeTelegramAction(node: any, context: any) {
       data: {
         message: "Telegram message sent successfully",
         messageId: result.result.message_id,
-        chatId: targetChatId,
+        chatId: processedChatId,
         text: processedMessage,
         sentAt: new Date().toISOString()
       }
@@ -299,8 +299,8 @@ function processTemplate(template: string, context: any): string {
   return template.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
     const cleanPath = path.trim();
     
-    if (context.triggerData?.[cleanPath]) {
-      return context.triggerData[cleanPath].toString();
+    if (context.triggerData?.body?.[cleanPath]) {
+      return context.triggerData.body[cleanPath].toString();
     }
     
     const [nodeId, field] = cleanPath.split('.');

@@ -81,6 +81,7 @@ export function useWorkflowEditor(id?: string) {
   const [credentials, setCredentials] = useState<any[]>([]);
   const [workflows, setWorkflows] = useState<any[]>([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [enabled, setEnabled] = useState(false);
 
   const authHeaders = useCallback(() => ({
     token: localStorage.getItem("token") ?? "",
@@ -124,6 +125,7 @@ export function useWorkflowEditor(id?: string) {
         setTitle(wf.title ?? "");
         setNodes(wf.nodes ?? []);
         setEdges(wf.connections ?? []);
+        setEnabled(wf.enabled ?? false);
       } catch (err) {
         console.error("load workflow error", err);
       }
@@ -257,12 +259,28 @@ const isValidConnection = useCallback((connection: any) => {
   return true;
 }, [nodes]);
 
+const toggleEnabled = useCallback(async () => {
+  if (!id){
+    return;
+  }
+  try{
+    const newEnabled = !enabled;
+    await axios.put(`${BASE}/workflow/${id}`, { enabled: newEnabled }, {
+      headers: authHeaders(),
+    });
+    setEnabled(newEnabled);
+  } catch (err) {
+    alert("Failed to update workflow enabled status");
+  }
+}, [id, enabled, authHeaders]);
+
   return {
     // State
     nodes,
     edges,
     title,
     saving,
+    enabled,
     credentials,
     workflows,
     selectedNode,
@@ -278,6 +296,7 @@ const isValidConnection = useCallback((connection: any) => {
     saveWorkflow,
     updateTitle,
     addNode,
+    toggleEnabled,
     isValidConnection
   };
 }

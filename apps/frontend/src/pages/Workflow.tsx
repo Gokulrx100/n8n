@@ -51,6 +51,7 @@ function WorkflowEditor() {
     edges,
     title,
     saving,
+    enabled,
     credentials,
     workflows,
     selectedNode,
@@ -65,6 +66,7 @@ function WorkflowEditor() {
     saveWorkflow,
     updateTitle,
     addNode,
+    toggleEnabled,
     isValidConnection
   } = useWorkflowEditor(id);
 
@@ -133,6 +135,8 @@ function WorkflowEditor() {
         onBack={() => navigate("/Home")}
         onSave={handleSave}
         onUpdateTitle={updateTitle}
+        onToggleEnabled={toggleEnabled}
+        enabled={enabled}
         isEditing={isEditing}
       />
 

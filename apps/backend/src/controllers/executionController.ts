@@ -53,16 +53,14 @@ export const executeWorkflowViaWebhook = async (req: any, res: Response) => {
       return res.status(400).json({ message: "Workflow is disabled" });
     }
 
-    // Verify HTTP method
     if (webhook.method.toUpperCase() !== req.method.toUpperCase()) {
       return res.status(405).json({ 
         message: `Method not allowed. Expected ${webhook.method}, got ${req.method}` 
       });
     }
 
-    // Verify secret if provided
     if (webhook.secret) {
-      const providedSecret = req.headers['x-webhook-secret'] || req.query.secret;
+      const providedSecret = req.headers["secret"] || req.query.secret;
       if (providedSecret !== webhook.secret) {
         return res.status(401).json({ message: "Invalid webhook secret" });
       }
