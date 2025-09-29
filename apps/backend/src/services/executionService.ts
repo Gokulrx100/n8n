@@ -1,6 +1,7 @@
 import { Types } from "mongoose";
 import workFlowModel, { IWorkFlow } from "../models/WorkFlow";
 import CredentialModel, { ICredential } from "../models/Credentials";
+import { BASE_SYSTEM_PROMPT } from "./systemPromptBase";
 import * as nodemailer from "nodemailer";
 import axios from "axios";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
@@ -371,7 +372,6 @@ async function createToolFromNode(node: any, context: any) {
         name: `http_${node.id}`,
         description: "Use this tool to fetch data from external APIs, websites, or any internet source. Use for JSON data, API calls, or external information.",
         func: async (input: string) => {
-          console.log(`🌐 HTTP Tool called with input: ${input}`);
           return await executeHttpTool(node, input, context);
         }
       });
@@ -379,9 +379,8 @@ async function createToolFromNode(node: any, context: any) {
       case 'codeTool':
         return new DynamicTool({
           name: `code_${node.id}`,
-          description: "Execute code to perform calculations, solve algorithms, or process data. Use this tool when users ask for mathematical operations, code execution, or computational tasks.  Automatically use numbers from user requests. Th tool supports JavaScript and Python.",
+          description: "Execute code to perform calculations, solve algorithms, or process data. Use this tool when users ask for mathematical operations, code execution, or computational tasks. Automatically use numbers from user requests. This tool supports JavaScript and Python.",
           func: async (input: string) => {
-            console.log(`💻 Code Tool called with input: ${input}`);
             return await executeCodeTool(node, input, context);
           }
         });
@@ -391,7 +390,6 @@ async function createToolFromNode(node: any, context: any) {
         name: `workflow_${node.id}`,
         description: `Execute another workflow. Use this tool to run a different workflow and get its result.`,
         func: async (input: string) => {
-          console.log(`🔄 Workflow Tool called with input: ${input}`);
           return await executeWorkflowTool(node, input, context);
         }
       });
@@ -427,7 +425,6 @@ async function executeHttpTool(node: any, input: string, context: any) {
   }
 }
 
-// Code Tool execution (placeholder)
 async function executeCodeTool(node: any, input: string, context: any): Promise<ExecResult> {
   const { language, code } = node.data || {};
 
@@ -474,7 +471,6 @@ async function executeCodeTool(node: any, input: string, context: any): Promise<
       }
     );
 
-    // If wait=true worked, postResp.data will contain final result
     if (postResp?.data && (postResp.data.stdout !== undefined || postResp.data.stderr !== undefined || postResp.data.status)) {
       const r = postResp.data;
       return {
@@ -489,8 +485,7 @@ async function executeCodeTool(node: any, input: string, context: any): Promise<
       };
     }
 
-    // If we didn't get final result (some instances ignore wait=true), fallback to submit + poll
-    // Submit without wait
+    // If we didn't get final result, fallback to submit + poll
     const submitResp = await axios.post(
       `${getUrlBase}?base64_encoded=false`,
       {
@@ -557,14 +552,11 @@ async function executeCodeTool(node: any, input: string, context: any): Promise<
 
 // Workflow Tool execution (placeholder)
 async function executeWorkflowTool(node: any, input: string, context: any) {
-  // TODO: Implement workflow execution
-  return "Workflow tool not implemented yet";
+  throw new Error("Workflow tool not implemented yet");
 }
 
 // AI Agent execution
 async function executeAIAgent(node: any, context: any) {
-  console.log(`🤖 Executing AI Agent: ${node.id}`);
-  
   // Find connected model node
   const modelNode = findConnectedModelNode(node, context.workflow);
   if (!modelNode) {
@@ -587,17 +579,19 @@ async function executeAIAgent(node: any, context: any) {
 
   // Find connected tool nodes
   const toolNodes = findConnectedToolNodes(node, context.workflow);
-  console.log(`🛠️ Found ${toolNodes.length} connected tools`);
-
   // Create tools from connected nodes
   const tools = await Promise.all(
     toolNodes.map((toolNode: any) => createToolFromNode(toolNode, context))
   );
 
-  console.log(`🛠️ Created ${tools.length} tools:`, tools.map(t => t.name));
+  // Process the user's system prompt with template variables
+  const processedUserPrompt = processTemplate(node.data.systemPrompt, context);
+  
+  // Combine with base system prompt
+  const finalSystemPrompt = BASE_SYSTEM_PROMPT.replace('{userPrompt}', processedUserPrompt);
 
   const customPrompt = ChatPromptTemplate.fromMessages([
-    ["system", node.data.systemPrompt],
+    ["system", finalSystemPrompt],
     ["placeholder", "{chat_history}"],
     ["human", "{input}"],
     ["placeholder", "{agent_scratchpad}"],
@@ -617,17 +611,14 @@ async function executeAIAgent(node: any, context: any) {
     verbose: true,
   });
 
-  // Get input from trigger data
-  const input = context.triggerData?.message || "Hello, how can I help you?";
-  console.log(`📝 Agent input: ${input}`);
+  // Use a generic input since the actual instruction is now in the system prompt
+  const input = "Execute the task as specified in the system prompt.";
 
   // Execute the agent
   const result = await agentExecutor.invoke({
     input: input,
     chat_history: [] // No memory for now
   });
-
-  console.log(`✅ Agent result:`, result);
 
   return {
     success: true,
