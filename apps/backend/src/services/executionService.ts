@@ -23,6 +23,18 @@ interface NodeExecutionResult {
   error?: string;
 }
 
+type ExecResult = {
+  status: string;
+  statusId?: number;
+  stdout?: string | null;
+  stderr?: string | null;
+  compile_output?: string | null;
+  time?: string | null;
+  memory?: string | null;
+  language: string;
+};
+
+
 export async function executeWorkflow(
   workflowId: Types.ObjectId,
   triggerData: any = {}
@@ -357,22 +369,22 @@ async function createToolFromNode(node: any, context: any) {
     case 'httpTool':
       return new DynamicTool({
         name: `http_${node.id}`,
-        description: `Make HTTP requests to external APIs. Use this tool to fetch data from any URL. For weather data, news, or any external information, use this tool.`,
+        description: "Use this tool to fetch data from external APIs, websites, or any internet source. Use for JSON data, API calls, or external information.",
         func: async (input: string) => {
           console.log(`🌐 HTTP Tool called with input: ${input}`);
           return await executeHttpTool(node, input, context);
         }
       });
     
-    case 'codeTool':
-      return new DynamicTool({
-        name: `code_${node.id}`,
-        description: `Execute JavaScript code. Use this tool to run code, perform calculations, or process data.`,
-        func: async (input: string) => {
-          console.log(`💻 Code Tool called with input: ${input}`);
-          return await executeCodeTool(node, input, context);
-        }
-      });
+      case 'codeTool':
+        return new DynamicTool({
+          name: `code_${node.id}`,
+          description: "Execute code to perform calculations, solve algorithms, or process data. Use this tool when users ask for mathematical operations, code execution, or computational tasks.  Automatically use numbers from user requests. Th tool supports JavaScript and Python.",
+          func: async (input: string) => {
+            console.log(`💻 Code Tool called with input: ${input}`);
+            return await executeCodeTool(node, input, context);
+          }
+        });
     
     case 'workflowTool':
       return new DynamicTool({
@@ -416,10 +428,132 @@ async function executeHttpTool(node: any, input: string, context: any) {
 }
 
 // Code Tool execution (placeholder)
-async function executeCodeTool(node: any, input: string, context: any) {
-  // TODO: Implement code execution
-  return "Code tool not implemented yet";
+async function executeCodeTool(node: any, input: string, context: any): Promise<ExecResult> {
+  const { language, code } = node.data || {};
+
+  if (!language || !code) {
+    throw new Error("No language or code configured in code tool");
+  }
+
+  const languageMap: { [key: string]: number } = {
+    javascript: 63, // Node.js
+    python: 71,     // Python 3
+  };
+
+  const languageId = languageMap[language.toLowerCase()];
+  if (!languageId) {
+    throw new Error(`Unsupported language: ${language}`);
+  }
+
+  const apiKey = process.env.JUDGE0_API_KEY;
+  if (!apiKey) {
+    throw new Error('Judge0 API key not configured in process.env.JUDGE0_API_KEY');
+  }
+
+  // Prefer the single-request mode (wait=true). If the instance supports it, no polling needed.
+  const postUrl = 'https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=false&wait=true';
+  const getUrlBase = 'https://judge0-ce.p.rapidapi.com/submissions';
+
+  try {
+    // First try one-shot request with wait=true (simpler)
+    const postResp = await axios.post(
+      postUrl,
+      {
+        source_code: code,
+        language_id: languageId,
+        stdin: input ?? '',
+        // cpu_time_limit: 2, memory_limit: 65536
+      },
+      {
+        headers: {
+          'X-RapidAPI-Key': apiKey,
+          'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com',
+          'Content-Type': 'application/json',
+        },
+        timeout: 20000, // 20s
+      }
+    );
+
+    // If wait=true worked, postResp.data will contain final result
+    if (postResp?.data && (postResp.data.stdout !== undefined || postResp.data.stderr !== undefined || postResp.data.status)) {
+      const r = postResp.data;
+      return {
+        status: r.status?.description ?? 'unknown',
+        statusId: r.status?.id,
+        stdout: r.stdout ?? null,
+        stderr: r.stderr ?? null,
+        compile_output: r.compile_output ?? null,
+        time: r.time ?? null,
+        memory: r.memory ?? null,
+        language,
+      };
+    }
+
+    // If we didn't get final result (some instances ignore wait=true), fallback to submit + poll
+    // Submit without wait
+    const submitResp = await axios.post(
+      `${getUrlBase}?base64_encoded=false`,
+      {
+        source_code: code,
+        language_id: languageId,
+        stdin: input ?? '',
+      },
+      {
+        headers: {
+          'X-RapidAPI-Key': apiKey,
+          'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com',
+          'Content-Type': 'application/json',
+        },
+        timeout: 15000,
+      }
+    );
+
+    const token = submitResp.data?.token;
+    if (!token) throw new Error('Failed to create submission (no token)');
+
+    // Poll for result
+    const maxAttempts = 15;
+    let attempts = 0;
+    let result: any = null;
+    while (attempts < maxAttempts) {
+      // small backoff
+      await new Promise((r) => setTimeout(r, 1000 + attempts * 500));
+
+      const res = await axios.get(`${getUrlBase}/${token}?base64_encoded=false`, {
+        headers: {
+          'X-RapidAPI-Key': apiKey,
+          'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com',
+        },
+        timeout: 15000,
+      });
+
+      result = res.data;
+      // status.id < 3 typically means "in queue" or "processing"
+      if (result && result.status && result.status.id >= 3) {
+        break; // finished
+      }
+      attempts++;
+    }
+
+    if (!result) throw new Error('No result after polling');
+
+    return {
+      status: result.status?.description ?? 'unknown',
+      statusId: result.status?.id,
+      stdout: result.stdout ?? null,
+      stderr: result.stderr ?? null,
+      compile_output: result.compile_output ?? null,
+      time: result.time ?? null,
+      memory: result.memory ?? null,
+      language,
+    };
+  } catch (err: any) {
+    // helpful error information
+    const msg = err?.response?.data ? JSON.stringify(err.response.data) : err.message;
+    throw new Error(`Code execution failed: ${msg}`);
+  }
 }
+
 
 // Workflow Tool execution (placeholder)
 async function executeWorkflowTool(node: any, input: string, context: any) {
