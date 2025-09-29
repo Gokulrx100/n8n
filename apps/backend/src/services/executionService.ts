@@ -3,6 +3,11 @@ import workFlowModel, { IWorkFlow } from "../models/WorkFlow";
 import CredentialModel, { ICredential } from "../models/Credentials";
 import * as nodemailer from "nodemailer";
 import axios from "axios";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { DynamicTool } from "@langchain/core/tools";
+import { AgentExecutor, createToolCallingAgent } from "langchain/agents";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
+
 
 interface ExecutionResult {
   executionId: string;
@@ -37,13 +42,14 @@ export async function executeWorkflow(
 
   const executionId = `exec_${Date.now()}`;
   const results: NodeExecutionResult[] = [];
-  const context = {
-    triggerData,
+  const context = { 
+    triggerData, 
     nodeOutputs: {} as Record<string, any>,
+    workflow: workflow
   };
 
   try {
-    await executeNodeSequence(triggerNode, workflow, context, results);
+  await executeNodeSequence(triggerNode, workflow, context, results);
 
     const hasFailures = results.some((result) => !result.success);
     return {
@@ -54,8 +60,8 @@ export async function executeWorkflow(
     
   } catch (error) {
     console.error("Workflow execution failed:", error);
-    return {
-      executionId,
+  return {
+    executionId,
       success: false,
       results: [
         {
@@ -71,9 +77,9 @@ export async function executeWorkflow(
 }
 
 async function executeNodeSequence(
-  currentNode: any,
-  workflow: IWorkFlow,
-  context: any,
+  currentNode: any, 
+  workflow: IWorkFlow, 
+  context: any, 
   results: NodeExecutionResult[]
 ) {
   const executed = new Set<string>();
@@ -83,22 +89,22 @@ async function executeNodeSequence(
     const currentBatch = [...queue];
     queue.length = 0;
     const batchPromises = currentBatch.map(async (nodeToExecute) => {
-      if (executed.has(nodeToExecute.id)) {
+    if (executed.has(nodeToExecute.id)) {
         return;
-      }
+    }
 
-      const nodeResult = await executeNode(nodeToExecute, context);
-
-      results.push({
-        nodeId: nodeToExecute.id,
-        nodeType: nodeToExecute.type,
-        success: nodeResult.success,
-        data: nodeResult.data,
+    const nodeResult = await executeNode(nodeToExecute, context);
+    
+    results.push({
+      nodeId: nodeToExecute.id,
+      nodeType: nodeToExecute.type,
+      success: nodeResult.success,
+      data: nodeResult.data,
         error: nodeResult.error,
-      });
+    });
 
-      context.nodeOutputs[nodeToExecute.id] = nodeResult.data;
-      executed.add(nodeToExecute.id);
+    context.nodeOutputs[nodeToExecute.id] = nodeResult.data;
+    executed.add(nodeToExecute.id);
 
       if (nodeResult.success) {
         const connectedNodes = getConnectedNodes(nodeToExecute.id, workflow);
@@ -117,15 +123,19 @@ async function executeNodeSequence(
   }
 }
 
-function getConnectedNodes(currentNodeId: string, workflow: IWorkFlow) {
+function getConnectedNodes(currentNodeId: string, workflow: IWorkFlow, direction: 'from' | 'to' = 'from') {
   const connections = workflow.connections || [];
   const connectedConnections = connections.filter(
-    (conn: any) => conn.source === currentNodeId
+    (conn: any) => direction === 'from' 
+      ? conn.source === currentNodeId 
+      : conn.target === currentNodeId
   );
 
   return connectedConnections
     .map((conn: any) => {
-      return workflow.nodes.find((node: any) => node.id === conn.target);
+      return workflow.nodes.find((node: any) => 
+        node.id === (direction === 'from' ? conn.target : conn.source)
+      );
     })
     .filter((node: any) => {
       return node !== undefined;
@@ -137,7 +147,7 @@ async function executeNode(
   context: any
 ): Promise<{ success: boolean; data: any; error?: string }> {
   console.log(`Executing: ${node.type} (${node.id})`);
-
+  
   try {
     switch (node.type) {
       case "manualTrigger":
@@ -154,7 +164,7 @@ async function executeNode(
         return {
           success: true,
           data: {
-            message: "Webhook trigger executed",
+            message: "Webhook trigger executed", 
             payload: context.triggerData,
             timestamp: new Date().toISOString(),
           },
@@ -167,10 +177,7 @@ async function executeNode(
         return await executeTelegramAction(node, context);
 
       case "aiAgent":
-        return await executeAiAgent(node, context);
-
-      case "httpTool":
-        return await executeHttpTool(node, context);
+        return await executeAIAgent(node, context);
 
       default:
         console.warn(`Unknown node type: ${node.type}`);
@@ -191,7 +198,7 @@ async function executeNode(
 
 async function executeEmailAction(node: any, context: any) {
   const { credentialId, to, subject, body } = node.data || {};
-
+  
   if (!credentialId) {
     throw new Error("No email credential selected");
   }
@@ -199,8 +206,8 @@ async function executeEmailAction(node: any, context: any) {
   const credential: ICredential | null =
     await CredentialModel.findById(credentialId);
   if (!credential || credential.platform !== "email") {
-    throw new Error("Email credential not found");
-  }
+      throw new Error("Email credential not found");
+    }
 
   const { email: fromEmail, appPassword } = credential.data;
   if (!fromEmail || !appPassword) {
@@ -243,14 +250,14 @@ async function executeEmailAction(node: any, context: any) {
   try {
     const info = await transporter.sendMail(mailOptions);
 
-    return {
-      success: true,
-      data: {
-        message: "Email sent successfully",
+  return {
+    success: true,
+    data: {
+      message: "Email sent successfully",
         messageId: info.messageId,
         from: fromEmail,
         to: processedRecipient,
-        subject: processedSubject,
+      subject: processedSubject,
         sentAt: new Date().toISOString(),
       },
     };
@@ -261,7 +268,7 @@ async function executeEmailAction(node: any, context: any) {
 
 async function executeTelegramAction(node: any, context: any) {
   const { credentialId, chatId, message } = node.data || {};
-
+  
   if (!credentialId) {
     throw new Error("No Telegram credential selected");
   }
@@ -291,7 +298,7 @@ async function executeTelegramAction(node: any, context: any) {
   }
 
   const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
-
+  
   try {
     const response = await axios.post(telegramApiUrl, {
       chat_id: processedChatId,
@@ -329,56 +336,183 @@ async function executeTelegramAction(node: any, context: any) {
   }
 }
 
-async function executeAiAgent(node: any, context: any) {
-  const { systemPrompt } = node.data || {};
 
-  if (!systemPrompt) {
-    throw new Error("System prompt required for AI Agent");
-  }
-
-  return {
-    success: true,
-    data: {
-      message: "AI Agent executed successfully",
-      output: "This is a placeholder response",
-      executedAt: new Date().toISOString(),
-    },
-  };
+// Helper function to find connected tool nodes
+function findConnectedToolNodes(aiAgentNode: any, workflow: any) {
+  const connectedNodes = getConnectedNodes(aiAgentNode.id, workflow, 'to');
+  return connectedNodes.filter((node: any) => 
+    ['httpTool', 'codeTool', 'workflowTool'].includes(node.type)
+  );
 }
 
-async function executeHttpTool(node: any, context: any) {
-  const { url, method } = node.data || {};
+// Helper function to find connected model node
+function findConnectedModelNode(aiAgentNode: any, workflow: any) {
+  const connectedNodes = getConnectedNodes(aiAgentNode.id, workflow, 'to');
+  return connectedNodes.find((node: any) => node.type === 'geminiModel');
+}
 
+// Helper function to create tools from connected nodes
+async function createToolFromNode(node: any, context: any) {
+  switch (node.type) {
+    case 'httpTool':
+      return new DynamicTool({
+        name: `http_${node.id}`,
+        description: `Make HTTP requests to external APIs. Use this tool to fetch data from any URL. For weather data, news, or any external information, use this tool.`,
+        func: async (input: string) => {
+          console.log(`🌐 HTTP Tool called with input: ${input}`);
+          return await executeHttpTool(node, input, context);
+        }
+      });
+    
+    case 'codeTool':
+      return new DynamicTool({
+        name: `code_${node.id}`,
+        description: `Execute JavaScript code. Use this tool to run code, perform calculations, or process data.`,
+        func: async (input: string) => {
+          console.log(`💻 Code Tool called with input: ${input}`);
+          return await executeCodeTool(node, input, context);
+        }
+      });
+    
+    case 'workflowTool':
+      return new DynamicTool({
+        name: `workflow_${node.id}`,
+        description: `Execute another workflow. Use this tool to run a different workflow and get its result.`,
+        func: async (input: string) => {
+          console.log(`🔄 Workflow Tool called with input: ${input}`);
+          return await executeWorkflowTool(node, input, context);
+        }
+      });
+    
+    default:
+      throw new Error(`Unknown tool type: ${node.type}`);
+  }
+}
+
+// HTTP Tool execution
+async function executeHttpTool(node: any, input: string, context: any) {
+  const { url, method = 'GET' } = node.data || {};
+  
   if (!url) {
-    throw new Error("URL is required for HTTP Tool");
+    throw new Error("No URL configured in HTTP tool");
   }
 
   try {
     const response = await axios({
-      method: method.toUpperCase(),
+      method: method.toLowerCase(),
       url: url,
+      data: method !== 'GET' ? input : undefined,
+      params: method === 'GET' ? { query: input } : undefined,
     });
 
-    return {
-      success: true,
-      data: {
-        message: "HTTP request executed successfully",
-        status: response.status,
-        data: response.data,
-        executedAt: new Date().toISOString(),
-      },
-    };
+    return JSON.stringify({
+      status: response.status,
+      data: response.data,
+      message: `HTTP ${method} request successful`
+    });
   } catch (error: any) {
     throw new Error(`HTTP request failed: ${error.message}`);
   }
 }
 
+// Code Tool execution (placeholder)
+async function executeCodeTool(node: any, input: string, context: any) {
+  // TODO: Implement code execution
+  return "Code tool not implemented yet";
+}
+
+// Workflow Tool execution (placeholder)
+async function executeWorkflowTool(node: any, input: string, context: any) {
+  // TODO: Implement workflow execution
+  return "Workflow tool not implemented yet";
+}
+
+// AI Agent execution
+async function executeAIAgent(node: any, context: any) {
+  console.log(`🤖 Executing AI Agent: ${node.id}`);
+  
+  // Find connected model node
+  const modelNode = findConnectedModelNode(node, context.workflow);
+  if (!modelNode) {
+    throw new Error("No Gemini model node connected to AI Agent");
+  }
+
+  // Get model configuration
+  const { apiKey, model, temperature, maxTokens } = modelNode.data || {};
+  if (!apiKey) {
+    throw new Error("No API key configured in model node");
+  }
+
+  // Create the model
+  const llm = new ChatGoogleGenerativeAI({
+    model: model,
+    temperature: temperature || 0,
+    maxOutputTokens: maxTokens || 1000,
+    apiKey: apiKey,
+  });
+
+  // Find connected tool nodes
+  const toolNodes = findConnectedToolNodes(node, context.workflow);
+  console.log(`🛠️ Found ${toolNodes.length} connected tools`);
+
+  // Create tools from connected nodes
+  const tools = await Promise.all(
+    toolNodes.map((toolNode: any) => createToolFromNode(toolNode, context))
+  );
+
+  console.log(`🛠️ Created ${tools.length} tools:`, tools.map(t => t.name));
+
+  const customPrompt = ChatPromptTemplate.fromMessages([
+    ["system", node.data.systemPrompt],
+    ["placeholder", "{chat_history}"],
+    ["human", "{input}"],
+    ["placeholder", "{agent_scratchpad}"],
+  ]);
+
+  // Create agent
+  const agent = await createToolCallingAgent({
+    llm: llm,
+    tools: tools,
+    prompt: customPrompt,
+  });
+
+  // Create agent executor
+  const agentExecutor = new AgentExecutor({
+    agent: agent,
+    tools: tools,
+    verbose: true,
+  });
+
+  // Get input from trigger data
+  const input = context.triggerData?.message || "Hello, how can I help you?";
+  console.log(`📝 Agent input: ${input}`);
+
+  // Execute the agent
+  const result = await agentExecutor.invoke({
+    input: input,
+    chat_history: [] // No memory for now
+  });
+
+  console.log(`✅ Agent result:`, result);
+
+  return {
+    success: true,
+    data: {
+      message: "AI Agent executed successfully",
+      output: result.output,
+      toolsUsed: result.intermediateSteps?.length || 0,
+      timestamp: new Date().toISOString(),
+    }
+  };
+}
+
+
 function processTemplate(template: string, context: any): string {
   if (!template) return "";
-
+  
   return template.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
     const cleanPath = path.trim();
-
+    
     if (context.triggerData?.[cleanPath]) {
       return context.triggerData[cleanPath].toString();
     }
