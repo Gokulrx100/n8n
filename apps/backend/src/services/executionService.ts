@@ -350,7 +350,7 @@ async function executeTelegramAction(node: any, context: any) {
 }
 
 
-// Helper function to find connected tool nodes
+// function to find connected tool nodes
 function findConnectedToolNodes(aiAgentNode: any, workflow: any) {
   const connectedNodes = getConnectedNodes(aiAgentNode.id, workflow, 'to');
   return connectedNodes.filter((node: any) => 
@@ -358,13 +358,13 @@ function findConnectedToolNodes(aiAgentNode: any, workflow: any) {
   );
 }
 
-// Helper function to find connected model node
+// function to find connected model node
 function findConnectedModelNode(aiAgentNode: any, workflow: any) {
   const connectedNodes = getConnectedNodes(aiAgentNode.id, workflow, 'to');
   return connectedNodes.find((node: any) => node.type === 'geminiModel');
 }
 
-// Helper function to create tools from connected nodes
+// function to create tools from connected nodes
 async function createToolFromNode(node: any, context: any) {
   switch (node.type) {
     case 'httpTool':
@@ -388,7 +388,7 @@ async function createToolFromNode(node: any, context: any) {
     case 'workflowTool':
       return new DynamicTool({
         name: `workflow_${node.id}`,
-        description: `Execute another workflow. Use this tool to run a different workflow and get its result.`,
+        description: `Execute another workflow to perform complex tasks. Use this tool when you need to run a different workflow that contains multiple steps or specialized logic. Pass data as JSON or simple text.`,
         func: async (input: string) => {
           return await executeWorkflowTool(node, input, context);
         }
@@ -447,12 +447,11 @@ async function executeCodeTool(node: any, input: string, context: any): Promise<
     throw new Error('Judge0 API key not configured in process.env.JUDGE0_API_KEY');
   }
 
-  // Prefer the single-request mode (wait=true). If the instance supports it, no polling needed.
   const postUrl = 'https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=false&wait=true';
   const getUrlBase = 'https://judge0-ce.p.rapidapi.com/submissions';
 
   try {
-    // First try one-shot request with wait=true (simpler)
+    // First try one-shot request with wait=true
     const postResp = await axios.post(
       postUrl,
       {
@@ -467,7 +466,7 @@ async function executeCodeTool(node: any, input: string, context: any): Promise<
           'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com',
           'Content-Type': 'application/json',
         },
-        timeout: 20000, // 20s
+        timeout: 20000,
       }
     );
 
@@ -525,7 +524,7 @@ async function executeCodeTool(node: any, input: string, context: any): Promise<
       result = res.data;
       // status.id < 3 typically means "in queue" or "processing"
       if (result && result.status && result.status.id >= 3) {
-        break; // finished
+        break;
       }
       attempts++;
     }
@@ -543,33 +542,60 @@ async function executeCodeTool(node: any, input: string, context: any): Promise<
       language,
     };
   } catch (err: any) {
-    // helpful error information
     const msg = err?.response?.data ? JSON.stringify(err.response.data) : err.message;
     throw new Error(`Code execution failed: ${msg}`);
   }
 }
 
 
-// Workflow Tool execution (placeholder)
+// Workflow Tool execution
 async function executeWorkflowTool(node: any, input: string, context: any) {
-  throw new Error("Workflow tool not implemented yet");
+  const { workflowId, triggerData } = node.data || {};
+  
+  if (!workflowId) {
+    throw new Error("No workflow ID configured in workflow tool");
+  }
+
+  try {
+    // Parse input as trigger data if it's a JSON string
+    let parsedTriggerData = triggerData || {};
+    if (input && typeof input === 'string') {
+      try {
+        parsedTriggerData = { ...parsedTriggerData, ...JSON.parse(input) };
+      } catch {
+        // If not JSON, treat as message
+        parsedTriggerData = { ...parsedTriggerData, message: input };
+      }
+    }
+
+    // Execute the target workflow
+    const result = await executeWorkflow(workflowId, parsedTriggerData);
+    
+    return JSON.stringify({
+      success: result.success,
+      executionId: result.executionId,
+      results: result.results,
+      message: `Workflow executed successfully with ${result.results.length} nodes`
+    });
+
+  } catch (error: any) {
+    throw new Error(`Workflow execution failed: ${error.message}`);
+  }
 }
 
 // AI Agent execution
 async function executeAIAgent(node: any, context: any) {
-  // Find connected model node
+
   const modelNode = findConnectedModelNode(node, context.workflow);
   if (!modelNode) {
     throw new Error("No Gemini model node connected to AI Agent");
   }
 
-  // Get model configuration
   const { apiKey, model, temperature, maxTokens } = modelNode.data || {};
   if (!apiKey) {
     throw new Error("No API key configured in model node");
   }
 
-  // Create the model
   const llm = new ChatGoogleGenerativeAI({
     model: model,
     temperature: temperature || 0,
@@ -577,17 +603,13 @@ async function executeAIAgent(node: any, context: any) {
     apiKey: apiKey,
   });
 
-  // Find connected tool nodes
   const toolNodes = findConnectedToolNodes(node, context.workflow);
-  // Create tools from connected nodes
   const tools = await Promise.all(
     toolNodes.map((toolNode: any) => createToolFromNode(toolNode, context))
   );
 
-  // Process the user's system prompt with template variables
   const processedUserPrompt = processTemplate(node.data.systemPrompt, context);
   
-  // Combine with base system prompt
   const finalSystemPrompt = BASE_SYSTEM_PROMPT.replace('{userPrompt}', processedUserPrompt);
 
   const customPrompt = ChatPromptTemplate.fromMessages([
@@ -597,27 +619,23 @@ async function executeAIAgent(node: any, context: any) {
     ["placeholder", "{agent_scratchpad}"],
   ]);
 
-  // Create agent
   const agent = await createToolCallingAgent({
     llm: llm,
     tools: tools,
     prompt: customPrompt,
   });
 
-  // Create agent executor
   const agentExecutor = new AgentExecutor({
     agent: agent,
     tools: tools,
     verbose: true,
   });
 
-  // Use a generic input since the actual instruction is now in the system prompt
-  const input = "Execute the task as specified in the system prompt.";
+  const input = `Execute the task as specified in the system prompt. Available data: ${JSON.stringify(context.triggerData)}`;
 
-  // Execute the agent
   const result = await agentExecutor.invoke({
     input: input,
-    chat_history: [] // No memory for now
+    chat_history: [] 
   });
 
   return {
