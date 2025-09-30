@@ -557,18 +557,15 @@ async function executeWorkflowTool(node: any, input: string, context: any) {
   }
 
   try {
-    // Parse input as trigger data if it's a JSON string
     let parsedTriggerData = triggerData || {};
     if (input && typeof input === 'string') {
       try {
         parsedTriggerData = { ...parsedTriggerData, ...JSON.parse(input) };
       } catch {
-        // If not JSON, treat as message
         parsedTriggerData = { ...parsedTriggerData, message: input };
       }
     }
 
-    // Execute the target workflow
     const result = await executeWorkflow(workflowId, parsedTriggerData);
     
     return JSON.stringify({
