@@ -14,7 +14,15 @@ const redisMemory = createClient({
   url: process.env.REDIS_URL,
 });
 
-redisMemory.connect().catch(console.error);
+redisMemory.connect().then(() => {
+  console.log("Redis connected");
+}).catch((error) => {
+  console.error("Redis connection error:", error);
+});
+
+redisMemory.on("error", (error) => {
+  console.error("Redis Client error:", error);
+});
 
 interface ExecutionResult {
   executionId: string;
