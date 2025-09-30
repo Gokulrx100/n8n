@@ -8,7 +8,13 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { DynamicTool } from "@langchain/core/tools";
 import { AgentExecutor, createToolCallingAgent } from "langchain/agents";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { createClient } from "redis";
 
+const redisMemory = createClient({
+  url: process.env.REDIS_URL,
+});
+
+redisMemory.connect().catch(console.error);
 
 interface ExecutionResult {
   executionId: string;
@@ -364,6 +370,11 @@ function findConnectedModelNode(aiAgentNode: any, workflow: any) {
   return connectedNodes.find((node: any) => node.type === 'geminiModel');
 }
 
+function findConnectedMemoryNode(aiAgentNode: any, workflow: any) {
+  const connectedNodes = getConnectedNodes(aiAgentNode.id, workflow, 'to');
+  return connectedNodes.find((node: any) => node.type === 'redisMemory');
+}
+
 // function to create tools from connected nodes
 async function createToolFromNode(node: any, context: any) {
   switch (node.type) {
@@ -547,6 +558,28 @@ async function executeCodeTool(node: any, input: string, context: any): Promise<
   }
 }
 
+//Redis Memory execution
+async function getMemory(sessionId: string, maxHistory: number=10) {
+  try{
+    const messages = await redisMemory.lRange(`chat:${sessionId}`, 0, maxHistory - 1);
+    return messages.map((msg : any) => {
+      const parsed = JSON.parse(msg);
+      return [parsed.type, parsed.content];
+    });
+  }catch(error) {
+    console.error(`Error fetching memory: ${error}`);
+    return [];
+  }
+}
+
+async function saveMessage(sessionId: string, message: any) {
+  try{
+    await redisMemory.lPush(`chat:${sessionId}`, JSON.stringify(message));
+    await redisMemory.lTrim(`chat:${sessionId}`, 0, 49);
+  }catch(error){
+    console.error(`Error saving memory: ${error}`);
+  }
+}
 
 // Workflow Tool execution
 async function executeWorkflowTool(node: any, input: string, context: any) {
@@ -605,6 +638,15 @@ async function executeAIAgent(node: any, context: any) {
     toolNodes.map((toolNode: any) => createToolFromNode(toolNode, context))
   );
 
+  const memoryNode = findConnectedMemoryNode(node, context.workflow);
+  let chatHistory : any[] = [];
+
+  if(memoryNode){
+    const {sessionId, maxHistory} = memoryNode.data || {};
+    if(sessionId){
+      chatHistory = await getMemory(sessionId, maxHistory || 10);
+    }
+  }
   const processedUserPrompt = processTemplate(node.data.systemPrompt, context);
   
   const finalSystemPrompt = BASE_SYSTEM_PROMPT.replace('{userPrompt}', processedUserPrompt);
@@ -625,15 +667,24 @@ async function executeAIAgent(node: any, context: any) {
   const agentExecutor = new AgentExecutor({
     agent: agent,
     tools: tools,
-    verbose: true,
+    verbose: false,
   });
 
   const input = `Execute the task as specified in the system prompt. Available data: ${JSON.stringify(context.triggerData)}`;
 
   const result = await agentExecutor.invoke({
     input: input,
-    chat_history: [] 
+    chat_history: chatHistory
   });
+
+  
+  if(memoryNode){
+    const {sessionId} = memoryNode.data || {};
+    if(sessionId){
+      await saveMessage(sessionId, {type: "human", content: input});
+      await saveMessage(sessionId, {type: "ai", content: result.output});
+    }
+  }
 
   return {
     success: true,
@@ -641,6 +692,7 @@ async function executeAIAgent(node: any, context: any) {
       message: "AI Agent executed successfully",
       output: result.output,
       toolsUsed: result.intermediateSteps?.length || 0,
+      memoryUsed: memoryNode ? true : false,
       timestamp: new Date().toISOString(),
     }
   };
