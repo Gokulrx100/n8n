@@ -450,8 +450,8 @@ interface IUser {
 interface IWorkFlow {
   title: string;                    // Workflow display name
   enabled: boolean;                 // Execution state
-  nodes: WorkflowNode[];           // Visual flow nodes
-  connections: Connection[];        // Node interconnections
+  nodes: any[];                    // Visual flow nodes
+  connections: Record<string, any>; // Node interconnections
   userId: ObjectId;                // Owner reference
   createdAt: Date;                 // Creation timestamp
   updatedAt: Date;                 // Last modification
@@ -488,12 +488,16 @@ interface ICredential {
 ##### **Webhook Model**
 ```typescript
 interface IWebhook {
-  path: string;                    // Unique webhook path
-  method: string;                  // HTTP method (GET, POST, etc.)
+  _id: ObjectId;                   // Unique webhook identifier
+  title: string;                   // Webhook display name
   workflowId: ObjectId;           // Associated workflow
+  nodeId: string;                 // Associated node ID
+  method: string;                  // HTTP method (GET, POST, etc.)
+  path: string;                    // Unique webhook path
+  header?: Record<string, string>; // Expected headers
   secret?: string;                 // Optional security token
-  headers?: Record<string, string>; // Expected headers
-  enabled: boolean;                // Active state
+  createdAt: Date;                 // Creation timestamp
+  updatedAt: Date;                 // Last modification
 }
 ```
 
@@ -527,14 +531,14 @@ interface NodeExecutionResult {
 
 ```typescript
 // User Registration
-POST /api/auth/register
+POST /api/auth/signup
 {
   "email": "user@example.com",
   "password": "securepassword"
 }
 
 // User Login
-POST /api/auth/login
+POST /api/auth/signin
 {
   "email": "user@example.com", 
   "password": "securepassword"
@@ -551,12 +555,16 @@ Authorization: Bearer <token>
 {
   "title": "My Workflow",
   "nodes": [...],
-  "connections": [...],
+  "connections": {...},
   "enabled": true
 }
 
 // Get User Workflows
 GET /api/workflows
+Authorization: Bearer <token>
+
+// Get Workflow by ID
+GET /api/workflows/:id
 Authorization: Bearer <token>
 
 // Update Workflow
@@ -565,7 +573,7 @@ Authorization: Bearer <token>
 {
   "title": "Updated Workflow",
   "nodes": [...],
-  "connections": [...]
+  "connections": {...}
 }
 
 // Delete Workflow  
@@ -616,6 +624,11 @@ Authorization: Bearer <token>
 // Update Credential
 PUT /api/credentials/:id
 Authorization: Bearer <token>
+{
+  "title": "Updated Credential",
+  "platform": "email",
+  "data": {...}
+}
 
 // Delete Credential
 DELETE /api/credentials/:id
@@ -860,6 +873,7 @@ export const createNewModel = async (req: authRequest, res: Response) => {
 
 ```bash
 # Prerequisites: Node.js 18+, MongoDB, Redis
+# Make sure MongoDB and Redis are running on your system
 
 # 1. Clone and install
 git clone https://github.com/Gokulrx100/n8n.git
@@ -871,14 +885,7 @@ cp apps/backend/.env.example apps/backend/.env
 cp apps/frontend/.env.example apps/frontend/.env
 # Edit .env files with your configurations
 
-# 3. Start services
-# Terminal 1: MongoDB
-mongod
-
-# Terminal 2: Redis  
-redis-server
-
-# Terminal 3: Application
+# 3. Start the application
 pnpm dev
 ```
 
