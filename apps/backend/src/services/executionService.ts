@@ -3,18 +3,18 @@ import workFlowModel, { IWorkFlow } from "../models/WorkFlow";
 import { executeEmailAction, executeTelegramAction } from "./nodeExecutors";
 import { executeAIAgent } from "./aiAgentService";
 
-interface ExecutionResult {
-  executionId: string;
-  success: boolean;
-  results: NodeExecutionResult[];
-}
-
 interface NodeExecutionResult {
   nodeId: string;
   nodeType: string;
   success: boolean;
   data: any;
   error?: string;
+}
+
+interface ExecutionResult {
+  executionId: string;
+  success: boolean;
+  results: NodeExecutionResult[];
 }
 
 export async function executeWorkflow(
