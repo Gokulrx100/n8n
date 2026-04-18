@@ -5,7 +5,7 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { BASE_SYSTEM_PROMPT } from "./systemPromptBase";
 import { getMemory, saveMessage } from "./memoryService";
 import { createToolFromNode } from "./toolExecutors";
-import { processTemplate } from "./executionService";
+import { processTemplate, getConnectedNodes } from "./executionService";
 
 
 export function findConnectedToolNodes(aiAgentNode: any, workflow: any) {
@@ -25,27 +25,6 @@ export function findConnectedMemoryNode(aiAgentNode: any, workflow: any) {
   const connectedNodes = getConnectedNodes(aiAgentNode.id, workflow, 'to');
   return connectedNodes.find((node: any) => node.type === 'redisMemory');
 }
-
-
-function getConnectedNodes(currentNodeId: string, workflow: any, direction: 'from' | 'to' = 'from') {
-  const connections = workflow.connections || [];
-  const connectedConnections = connections.filter(
-    (conn: any) => direction === 'from' 
-      ? conn.source === currentNodeId 
-      : conn.target === currentNodeId
-  );
-
-  return connectedConnections
-    .map((conn: any) => {
-      return workflow.nodes.find((node: any) => 
-        node.id === (direction === 'from' ? conn.target : conn.source)
-      );
-    })
-    .filter((node: any) => {
-      return node !== undefined;
-    });
-}
-
 
 export async function executeAIAgent(node: any, context: any) {
   const modelNode = findConnectedModelNode(node, context.workflow);
